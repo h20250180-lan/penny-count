@@ -98,6 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
+      console.log('Attempting signup for:', userData.email);
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -110,9 +112,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      if (authError) throw authError;
+      console.log('Signup response:', {
+        hasUser: !!authData?.user,
+        error: authError?.message
+      });
+
+      if (authError) {
+        console.error('Signup error:', authError);
+        throw authError;
+      }
 
       if (authData.user) {
+        console.log('Creating user profile for:', authData.user.id);
+
         const { error: profileError } = await supabase
           .from('users')
           .insert([{
@@ -130,6 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw profileError;
         }
 
+        console.log('Signup successful');
         setIsLoading(false);
         return true;
       }
@@ -137,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       return false;
     } catch (err: any) {
+      console.error('Signup caught error:', err);
       let msg = err?.message || 'Sign up failed.';
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
         msg = 'Email already exists.';
@@ -152,12 +166,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
+      console.log('Attempting login for:', emailOrPhone);
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: emailOrPhone,
         password: password,
       });
 
-      if (error) throw error;
+      console.log('Login response:', {
+        hasUser: !!data?.user,
+        error: error?.message
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        throw error;
+      }
 
       if (data.user) {
         await loadUserProfile(data.user.id);
@@ -167,7 +191,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       return false;
     } catch (error: any) {
-      setLoginError(error.message || 'Invalid credentials.');
+      console.error('Login caught error:', error);
+      const errorMessage = error.message || 'Invalid credentials.';
+      setLoginError(errorMessage);
       setIsLoading(false);
       return false;
     }
