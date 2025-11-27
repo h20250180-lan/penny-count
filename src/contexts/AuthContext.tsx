@@ -101,6 +101,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
+        options: {
+          data: {
+            name: userData.name,
+            phone: userData.phone,
+            role: userData.role
+          }
+        }
       });
 
       if (authError) throw authError;
@@ -118,7 +125,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             assigned_lines: []
           }]);
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          throw profileError;
+        }
 
         setIsLoading(false);
         return true;
@@ -128,7 +138,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     } catch (err: any) {
       let msg = err?.message || 'Sign up failed.';
-      if (msg.toLowerCase().includes('already registered')) msg = 'Email already exists.';
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+        msg = 'Email already exists.';
+      }
       setSignupError(msg);
       setIsLoading(false);
       return false;
