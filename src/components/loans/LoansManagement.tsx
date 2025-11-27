@@ -266,7 +266,7 @@ export const LoansManagement: React.FC = () => {
             }
           </p>
         </div>
-        {user?.role === 'agent' && (
+        {(user?.role === 'agent' || user?.role === 'owner' || user?.role === 'co-owner') && (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
