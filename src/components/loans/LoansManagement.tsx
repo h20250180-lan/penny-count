@@ -122,26 +122,27 @@ export const LoansManagement: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>(emptyBorrowerMap);
 
+  const [lines, setLines] = React.useState<any[]>([]);
+
   // Load data on component mount
   React.useEffect(() => {
     const loadData = async () => {
       try {
-        const loansData = await dataService.getLoans();
+        const [loansData, borrowersData, linesData] = await Promise.all([
+          dataService.getLoans(),
+          dataService.getBorrowers(),
+          dataService.getLines()
+        ]);
         setLoans(loansData);
-        // also fetch borrowers to resolve names
-        try {
-          const b = await dataService.getBorrowers();
-          const map: { [key: string]: string } = {};
-          b.forEach((br: Borrower) => { map[br.id] = br.name; });
-          setBorrowerMap(map);
-        } catch (e) {
-          console.warn('Failed to fetch borrowers for loans view', e);
-        }
+        setLines(linesData);
+        const map: { [key: string]: string } = {};
+        borrowersData.forEach((br: Borrower) => { map[br.id] = br.name; });
+        setBorrowerMap(map);
       } catch (error) {
         console.error('Error loading loans:', error);
       }
     };
-    
+
     loadData();
   }, []);
 
@@ -521,8 +522,9 @@ export const LoansManagement: React.FC = () => {
                 </label>
                 <select name="lineId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
                   <option value="">Choose line</option>
-                  <option value="1">Line A - Central Market</option>
-                  <option value="2">Line B - Industrial Area</option>
+                  {lines.map(line => (
+                    <option key={line.id} value={line.id}>{line.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
