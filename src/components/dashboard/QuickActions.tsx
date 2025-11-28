@@ -17,29 +17,29 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
       return [
         {
           id: 'collect-payment',
-          title: 'Collect Payment',
-          description: 'Record collection',
+          title: t('collectPayment'),
+          description: t('recordCollection'),
           icon: TrendingUp,
           color: 'emerald'
         },
         {
           id: 'new-loan',
-          title: 'New Loan',
-          description: 'Disburse loan',
+          title: t('newLoan'),
+          description: t('disburseLoan'),
           icon: Plus,
           color: 'blue'
         },
         {
           id: 'add-borrower',
-          title: 'Add Borrower',
-          description: 'New customer',
+          title: t('addBorrower'),
+          description: t('newCustomer'),
           icon: Users,
           color: 'purple'
         },
         {
           id: 'sync-data',
-          title: 'Sync Data',
-          description: 'Upload offline data',
+          title: t('syncData'),
+          description: t('uploadOfflineData'),
           icon: FileText,
           color: 'orange'
         }
@@ -49,29 +49,29 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
     return [
       {
         id: 'create-line',
-        title: 'Create Line',
-        description: 'New lending line',
+        title: t('createLine'),
+        description: t('newLendingLine'),
         icon: Plus,
         color: 'emerald'
       },
       {
         id: 'add-agent',
-        title: 'Add Agent',
-        description: 'Assign new agent',
+        title: t('addAgent'),
+        description: t('assignNewAgent'),
         icon: Users,
         color: 'blue'
       },
       {
         id: 'view-reports',
-        title: 'View Reports',
-        description: 'Analytics & insights',
+        title: t('viewReports'),
+        description: t('analyticsInsights'),
         icon: FileText,
         color: 'purple'
       },
       {
         id: 'export-data',
-        title: 'Export Data',
-        description: 'Download reports',
+        title: t('exportData'),
+        description: t('downloadReports'),
         icon: TrendingUp,
         color: 'orange'
       }

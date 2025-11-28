@@ -19,42 +19,42 @@ interface SidebarProps {
   onSectionChange: (section: string) => void;
 }
 
-const getNavigationItems = (role: string) => {
+const getNavigationItems = (role: string, t: (key: string) => string) => {
   const baseItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
   ];
 
   if (role === 'owner') {
     return [
       ...baseItems,
-      { id: 'lines', label: 'Lines Management', icon: Building2 },
-      { id: 'users', label: 'Users & Agents', icon: Users },
-      { id: 'borrowers', label: 'All Borrowers', icon: UserCheck },
-      { id: 'loans', label: 'Loan Overview', icon: CreditCard },
-      { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-      { id: 'settings', label: 'Settings', icon: Settings },
+      { id: 'lines', label: t('linesManagement'), icon: Building2 },
+      { id: 'users', label: t('usersAgents'), icon: Users },
+      { id: 'borrowers', label: t('allBorrowers'), icon: UserCheck },
+      { id: 'loans', label: t('loanOverview'), icon: CreditCard },
+      { id: 'analytics', label: t('analytics'), icon: TrendingUp },
+      { id: 'settings', label: t('settings'), icon: Settings },
     ];
   }
 
   if (role === 'co-owner') {
     return [
       ...baseItems,
-      { id: 'lines', label: 'My Lines', icon: Building2 },
-      { id: 'agents', label: 'My Agents', icon: Users },
-      { id: 'borrowers', label: 'Borrowers', icon: UserCheck },
-      { id: 'loans', label: 'Loans', icon: CreditCard },
-      { id: 'commissions', label: 'Commissions', icon: Wallet },
-      { id: 'analytics', label: 'Reports', icon: TrendingUp },
+      { id: 'lines', label: t('myLines'), icon: Building2 },
+      { id: 'agents', label: t('myAgents'), icon: Users },
+      { id: 'borrowers', label: t('borrowers'), icon: UserCheck },
+      { id: 'loans', label: t('loans'), icon: CreditCard },
+      { id: 'commissions', label: t('commissions'), icon: Wallet },
+      { id: 'analytics', label: t('reports'), icon: TrendingUp },
     ];
   }
 
   // Agent role
   return [
     ...baseItems,
-    { id: 'borrowers', label: 'My Borrowers', icon: UserCheck },
-    { id: 'loans', label: 'Active Loans', icon: CreditCard },
-    { id: 'collections', label: 'Collections', icon: Wallet },
-    { id: 'payments', label: 'Payments', icon: TrendingUp },
+    { id: 'borrowers', label: t('myBorrowers'), icon: UserCheck },
+    { id: 'loans', label: t('activeLoans'), icon: CreditCard },
+    { id: 'collections', label: t('collections'), icon: Wallet },
+    { id: 'payments', label: t('payments'), icon: TrendingUp },
   ];
 };
 
@@ -64,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
 
   if (!user) return null;
 
-  const navigationItems = getNavigationItems(user.role);
+  const navigationItems = getNavigationItems(user.role, t);
 
   return (
     <motion.div

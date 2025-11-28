@@ -26,39 +26,39 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
     if (user?.role === 'owner') {
       return [
         {
-          title: 'Total Lines',
+          title: t('totalLines'),
           value: metrics.totalLines,
           icon: Building2,
           color: 'bg-blue-500',
-          change: '+2 this month',
+          change: `+2 ${t('thisMonth')}`,
           trend: 'up'
         },
         {
-          title: 'Total Disbursed',
+          title: t('totalDisbursed'),
           value: `₹${metrics.totalDisbursed?.toLocaleString()}`,
           icon: DollarSign,
           color: 'bg-green-500',
-          change: '+12% from last month',
+          change: `+12% ${t('fromLastMonth')}`,
           trend: 'up'
         },
         {
-          title: 'Total Collected',
+          title: t('totalCollected'),
           value: `₹${metrics.totalCollected?.toLocaleString()}`,
           icon: Wallet,
           color: 'bg-emerald-500',
-          change: '+8% from last month',
+          change: `+8% ${t('fromLastMonth')}`,
           trend: 'up'
         },
         {
-          title: 'Net Profit',
+          title: t('netProfit'),
           value: `₹${metrics.profit?.toLocaleString()}`,
           icon: TrendingUp,
           color: 'bg-purple-500',
-          change: '+15% from last month',
+          change: `+15% ${t('fromLastMonth')}`,
           trend: 'up'
         },
         {
-          title: 'Active Borrowers',
+          title: t('activeBorrowers'),
           value: metrics.totalBorrowers,
           icon: Users,
           color: 'bg-indigo-500',
@@ -66,7 +66,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           trend: 'up'
         },
         {
-          title: 'Overdue Loans',
+          title: t('overdueLoans'),
           value: metrics.overdueLoans,
           icon: AlertTriangle,
           color: 'bg-red-500',
@@ -79,23 +79,23 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
     if (user?.role === 'co-owner') {
       return [
         {
-          title: 'My Lines',
+          title: t('myLines'),
           value: metrics.totalLines,
           icon: Building2,
           color: 'bg-blue-500',
-          change: 'Active lines',
+          change: t('active'),
           trend: 'neutral'
         },
         {
-          title: 'Total Disbursed',
+          title: t('totalDisbursed'),
           value: `₹${metrics.totalDisbursed?.toLocaleString()}`,
           icon: DollarSign,
           color: 'bg-green-500',
-          change: '+8% this month',
+          change: `+8% ${t('thisMonth')}`,
           trend: 'up'
         },
         {
-          title: 'Collections',
+          title: t('collections'),
           value: `₹${metrics.totalCollected?.toLocaleString()}`,
           icon: Wallet,
           color: 'bg-emerald-500',
@@ -103,11 +103,11 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           trend: 'up'
         },
         {
-          title: 'Commission Earned',
+          title: t('commissions'),
           value: `₹${(metrics.profit * 0.1)?.toLocaleString()}`,
           icon: TrendingUp,
           color: 'bg-purple-500',
-          change: 'This month',
+          change: t('thisMonth'),
           trend: 'up'
         }
       ];
@@ -116,35 +116,35 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
     // Agent role
     return [
       {
-        title: 'My Borrowers',
+        title: t('myBorrowers'),
         value: metrics.totalBorrowers,
         icon: Users,
         color: 'bg-blue-500',
-        change: 'Active borrowers',
+        change: t('active'),
         trend: 'neutral'
       },
       {
-        title: 'Active Loans',
+        title: t('activeLoans'),
         value: metrics.activeLoans,
         icon: CreditCard,
         color: 'bg-green-500',
-        change: 'Currently active',
+        change: t('active'),
         trend: 'neutral'
       },
       {
-        title: 'Cash on Hand',
+        title: t('balance'),
         value: `₹${metrics.cashOnHand?.toLocaleString()}`,
         icon: Wallet,
         color: 'bg-emerald-500',
-        change: 'Available for lending',
+        change: t('availableCredit'),
         trend: 'neutral'
       },
       {
-        title: 'Collection Rate',
+        title: t('collections'),
         value: `${metrics.collectionEfficiency}%`,
         icon: TrendingUp,
         color: 'bg-purple-500',
-        change: 'This month',
+        change: t('thisMonth'),
         trend: metrics.collectionEfficiency > 85 ? 'up' : 'down'
       }
     ];

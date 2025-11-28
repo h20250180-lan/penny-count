@@ -125,6 +125,21 @@ const translations: Record<Language, Record<string, string>> = {
     availableCredit: 'Available Credit',
     paidAmount: 'Paid Amount',
     remainingAmount: 'Remaining Amount',
+
+    // Quick Actions
+    collectPayment: 'Collect Payment',
+    recordCollection: 'Record collection',
+    disburseLoan: 'Disburse loan',
+    newCustomer: 'New customer',
+    syncData: 'Sync Data',
+    uploadOfflineData: 'Upload offline data',
+    createLine: 'Create Line',
+    newLendingLine: 'New lending line',
+    addAgent: 'Add Agent',
+    assignNewAgent: 'Assign new agent',
+    analyticsInsights: 'Analytics & insights',
+    exportData: 'Export Data',
+    downloadReports: 'Download reports',
   },
   te: {
     // Navigation
@@ -232,6 +247,21 @@ const translations: Record<Language, Record<string, string>> = {
     availableCredit: 'అందుబాటులో క్రెడిట్',
     paidAmount: 'చెల్లించిన మొత్తం',
     remainingAmount: 'మిగిలిన మొత్తం',
+
+    // Quick Actions
+    collectPayment: 'చెల్లింపు వసూలు',
+    recordCollection: 'వసూలు రికార్డ్',
+    disburseLoan: 'రుణం పంపిణీ',
+    newCustomer: 'కొత్త కస్టమర్',
+    syncData: 'డేటా సింక్',
+    uploadOfflineData: 'ఆఫ్‌లైన్ డేటా అప్‌లోడ్',
+    createLine: 'లైన్ సృష్టించు',
+    newLendingLine: 'కొత్త లెండింగ్ లైన్',
+    addAgent: 'ఏజెంట్ జోడించు',
+    assignNewAgent: 'కొత్త ఏజెంట్ కేటాయించు',
+    analyticsInsights: 'విశ్లేషణ & అంతర్దృష్టులు',
+    exportData: 'డేటా ఎగుమతి',
+    downloadReports: 'నివేదికలు డౌన్‌లోడ్',
   }
 };
 
