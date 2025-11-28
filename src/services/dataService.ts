@@ -311,19 +311,25 @@ class DataService {
 
     if (error) throw error;
 
-    await supabase.rpc('increment', {
-      table_name: 'lines',
-      column_name: 'total_disbursed',
-      row_id: loan.lineId,
-      amount: principal
-    }).catch(() => {});
+    try {
+      const { data: line } = await supabase
+        .from('lines')
+        .select('total_disbursed, current_balance')
+        .eq('id', loan.lineId)
+        .single();
 
-    await supabase.rpc('decrement', {
-      table_name: 'lines',
-      column_name: 'current_balance',
-      row_id: loan.lineId,
-      amount: principal
-    }).catch(() => {});
+      if (line) {
+        await supabase
+          .from('lines')
+          .update({
+            total_disbursed: Number(line.total_disbursed || 0) + principal,
+            current_balance: Number(line.current_balance || 0) - principal
+          })
+          .eq('id', loan.lineId);
+      }
+    } catch (e) {
+      console.warn('Failed to update line totals:', e);
+    }
 
     return {
       id: data.id,
@@ -434,19 +440,25 @@ class DataService {
       const newPaidAmount = Number(loan.amount_paid) + (payment.amount || 0);
       await this.updateLoan(payment.loanId!, { paidAmount: newPaidAmount });
 
-      await supabase.rpc('increment', {
-        table_name: 'lines',
-        column_name: 'total_collected',
-        row_id: loan.line_id,
-        amount: payment.amount
-      }).catch(() => {});
+      try {
+        const { data: line } = await supabase
+          .from('lines')
+          .select('total_collected, current_balance')
+          .eq('id', loan.line_id)
+          .single();
 
-      await supabase.rpc('increment', {
-        table_name: 'lines',
-        column_name: 'current_balance',
-        row_id: loan.line_id,
-        amount: payment.amount
-      }).catch(() => {});
+        if (line) {
+          await supabase
+            .from('lines')
+            .update({
+              total_collected: Number(line.total_collected || 0) + (payment.amount || 0),
+              current_balance: Number(line.current_balance || 0) + (payment.amount || 0)
+            })
+            .eq('id', loan.line_id);
+        }
+      } catch (e) {
+        console.warn('Failed to update line totals:', e);
+      }
     }
 
     return {
