@@ -177,33 +177,49 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const refreshAgentLocations = async () => {
     try {
-      const { data, error } = await supabase
+      // First, get all agent locations
+      const { data: locationData, error: locationError } = await supabase
         .from('agent_locations')
-        .select(`
-          id,
-          user_id,
-          latitude,
-          longitude,
-          accuracy,
-          is_active,
-          last_updated,
-          users!inner(name)
-        `)
+        .select('*')
         .eq('is_active', true)
         .order('last_updated', { ascending: false });
 
-      if (error) throw error;
+      if (locationError) {
+        console.error('Error fetching locations:', locationError);
+        return;
+      }
 
-      const locations: AgentLocation[] = (data || []).map((loc: any) => ({
-        id: loc.id,
-        userId: loc.user_id,
-        userName: loc.users.name,
-        latitude: parseFloat(loc.latitude),
-        longitude: parseFloat(loc.longitude),
-        accuracy: parseFloat(loc.accuracy),
-        isActive: loc.is_active,
-        lastUpdated: new Date(loc.last_updated)
-      }));
+      if (!locationData || locationData.length === 0) {
+        setAgentLocations([]);
+        return;
+      }
+
+      // Get user details for each location
+      const userIds = locationData.map(loc => loc.user_id);
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, name, role')
+        .in('id', userIds);
+
+      if (userError) {
+        console.error('Error fetching users:', userError);
+        return;
+      }
+
+      // Combine location and user data
+      const locations: AgentLocation[] = locationData.map((loc: any) => {
+        const user = userData?.find(u => u.id === loc.user_id);
+        return {
+          id: loc.id,
+          userId: loc.user_id,
+          userName: user?.name || 'Unknown',
+          latitude: parseFloat(loc.latitude),
+          longitude: parseFloat(loc.longitude),
+          accuracy: parseFloat(loc.accuracy || 0),
+          isActive: loc.is_active,
+          lastUpdated: new Date(loc.last_updated)
+        };
+      });
 
       setAgentLocations(locations);
     } catch (error) {

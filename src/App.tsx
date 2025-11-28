@@ -20,6 +20,7 @@ import { Commissions } from './components/commissions/Commissions';
 import { Analytics } from './components/analytics/Analytics';
 import { Settings } from './components/settings/Settings';
 import { AgentLocationMap } from './components/location/AgentLocationMap';
+import { InstallPrompt } from './components/pwa/InstallPrompt';
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -129,6 +130,9 @@ const AppContent: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
     </div>
   );
 };
