@@ -4,12 +4,15 @@ import App from './App.tsx';
 import './index.css';
 import { ToastProvider } from './contexts/ToastContext';
 import { Toaster } from './components/ui/Toaster';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ToastProvider>
-      <App />
-      <Toaster />
-    </ToastProvider>
+    <LanguageProvider>
+      <ToastProvider>
+        <App />
+        <Toaster />
+      </ToastProvider>
+    </LanguageProvider>
   </StrictMode>
 );

@@ -1,17 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  Users, 
-  CreditCard, 
-  TrendingUp, 
-  UserCheck, 
+import {
+  LayoutDashboard,
+  Users,
+  CreditCard,
+  TrendingUp,
+  UserCheck,
   Settings,
   LogOut,
   Building2,
   Wallet
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface SidebarProps {
   activeSection: string;
@@ -59,7 +60,8 @@ const getNavigationItems = (role: string) => {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => {
   const { user, logout } = useAuth();
-  
+  const { t } = useLanguage();
+
   if (!user) return null;
 
   const navigationItems = getNavigationItems(user.role);
@@ -114,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
           className="w-full flex items-center space-x-3 p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
         >
           <LogOut className="w-5 h-5" />
-          <span className="font-medium">Logout</span>
+          <span className="font-medium">{t('logout')}</span>
         </motion.button>
       </div>
     </motion.div>

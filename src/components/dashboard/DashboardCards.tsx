@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  CreditCard, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  CreditCard,
   DollarSign,
   AlertTriangle,
   Building2,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { DashboardMetrics } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface DashboardCardsProps {
   metrics: DashboardMetrics;
@@ -19,6 +20,7 @@ interface DashboardCardsProps {
 
 export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const getCardsForRole = () => {
     if (user?.role === 'owner') {

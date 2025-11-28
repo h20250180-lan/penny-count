@@ -4,6 +4,8 @@ import { Bell, Search, Wifi, WifiOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { NotificationCenter } from '../notifications/NotificationCenter';
 import { useOffline } from '../offline/OfflineManager';
+import { LanguageToggle } from '../LanguageToggle';
+import { ThemeToggle } from '../ThemeToggle';
 
 interface TopBarProps {
   title: string;
@@ -52,6 +54,12 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
 
         {/* Notifications */}
         <NotificationCenter />
+
+        {/* Language Toggle */}
+        <LanguageToggle />
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
         {/* User info */}
         <div className="flex items-center space-x-3">
