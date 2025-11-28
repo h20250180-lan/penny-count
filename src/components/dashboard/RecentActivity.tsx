@@ -1,14 +1,15 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  Clock, 
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  Clock,
   // CheckCircle,
   AlertCircle,
   User
 } from 'lucide-react';
 import { dataService } from '../../services/dataService';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface Activity {
   id: string;
@@ -21,6 +22,7 @@ interface Activity {
 }
 
 export const RecentActivity: React.FC<{ onViewAll?: (section: string) => void }> = ({ onViewAll }) => {
+  const { t } = useLanguage();
   const [activities, setActivities] = React.useState<Activity[]>([]);
 
   React.useEffect(() => {
@@ -108,7 +110,7 @@ export const RecentActivity: React.FC<{ onViewAll?: (section: string) => void }>
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
     >
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-800">Recent Activity</h2>
+        <h2 className="text-lg font-semibold text-gray-800">{t('recentActivity')}</h2>
         <button
           onClick={() => {
             if (onViewAll) onViewAll('loans');
@@ -116,7 +118,7 @@ export const RecentActivity: React.FC<{ onViewAll?: (section: string) => void }>
           }}
           className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
         >
-          View All
+          {t('view')} {t('loans')}
         </button>
       </div>
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Plus, TrendingUp, Users, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface QuickActionsProps {
   onAction: (action: string) => void;
@@ -9,6 +10,7 @@ interface QuickActionsProps {
 
 export const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const getActionsForRole = () => {
     if (user?.role === 'agent') {
@@ -95,7 +97,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
       transition={{ duration: 0.5, delay: 0.4 }}
       className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
     >
-      <h2 className="text-lg font-semibold text-gray-800 mb-6">Quick Actions</h2>
+      <h2 className="text-lg font-semibold text-gray-800 mb-6">{t('quickActions')}</h2>
       
       <div className="grid grid-cols-2 gap-4">
         {actions.map((action) => (

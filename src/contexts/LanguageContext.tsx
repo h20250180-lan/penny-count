@@ -20,6 +20,7 @@ export const useLanguage = () => {
 
 const translations: Record<Language, Record<string, string>> = {
   en: {
+    // Navigation
     dashboard: 'Dashboard',
     loans: 'Loans',
     borrowers: 'Borrowers',
@@ -31,11 +32,34 @@ const translations: Record<Language, Record<string, string>> = {
     settings: 'Settings',
     users: 'Users',
     logout: 'Logout',
-    welcome: 'Welcome',
-    totalLoans: 'Total Loans',
+    linesManagement: 'Lines Management',
+    myLines: 'My Lines',
+    usersAgents: 'Users & Agents',
+    myAgents: 'My Agents',
+    allBorrowers: 'All Borrowers',
+    myBorrowers: 'My Borrowers',
+    loanOverview: 'Loan Overview',
     activeLoans: 'Active Loans',
+    payments: 'Payments',
+    reports: 'Reports',
+
+    // General
+    welcome: 'Welcome',
+    search: 'Search',
+    searchBorrowersLoans: 'Search borrowers, loans...',
+    filter: 'Filter',
+    export: 'Export',
+    online: 'Online',
+    offline: 'Offline',
+
+    // Dashboard
+    totalLoans: 'Total Loans',
+    totalLines: 'Total Lines',
     totalDisbursed: 'Total Disbursed',
     totalCollected: 'Total Collected',
+    netProfit: 'Net Profit',
+    activeBorrowers: 'Active Borrowers',
+    overdueLoans: 'Overdue Loans',
     pendingCollections: 'Pending Collections',
     quickActions: 'Quick Actions',
     recentActivity: 'Recent Activity',
@@ -43,22 +67,30 @@ const translations: Record<Language, Record<string, string>> = {
     recordPayment: 'Record Payment',
     addBorrower: 'Add Borrower',
     viewReports: 'View Reports',
-    search: 'Search',
-    filter: 'Filter',
-    export: 'Export',
+    thisMonth: 'this month',
+    fromLastMonth: 'from last month',
+
+    // Status
     status: 'Status',
-    amount: 'Amount',
-    balance: 'Balance',
-    dueDate: 'Due Date',
-    actions: 'Actions',
     active: 'Active',
     completed: 'Completed',
     overdue: 'Overdue',
     pending: 'Pending',
+    paid: 'Paid',
+    partial: 'Partial',
+
+    // Common fields
+    amount: 'Amount',
+    balance: 'Balance',
+    dueDate: 'Due Date',
+    actions: 'Actions',
     name: 'Name',
     phone: 'Phone',
     email: 'Email',
     address: 'Address',
+    date: 'Date',
+
+    // Buttons
     save: 'Save',
     cancel: 'Cancel',
     delete: 'Delete',
@@ -66,10 +98,17 @@ const translations: Record<Language, Record<string, string>> = {
     view: 'View',
     close: 'Close',
     confirm: 'Confirm',
+    add: 'Add',
+    update: 'Update',
+    create: 'Create',
+
+    // Messages
     success: 'Success',
     error: 'Error',
     loading: 'Loading',
     noData: 'No data available',
+
+    // Loan fields
     principal: 'Principal',
     interest: 'Interest',
     tenure: 'Tenure',
@@ -84,8 +123,11 @@ const translations: Record<Language, Record<string, string>> = {
     totalAmount: 'Total Amount',
     currentBalance: 'Current Balance',
     availableCredit: 'Available Credit',
+    paidAmount: 'Paid Amount',
+    remainingAmount: 'Remaining Amount',
   },
   te: {
+    // Navigation
     dashboard: 'డాష్‌బోర్డ్',
     loans: 'రుణాలు',
     borrowers: 'రుణగ్రహీతలు',
@@ -97,34 +139,65 @@ const translations: Record<Language, Record<string, string>> = {
     settings: 'సెట్టింగ్‌లు',
     users: 'వినియోగదారులు',
     logout: 'లాగ్అవుట్',
-    welcome: 'స్వాగతం',
-    totalLoans: 'మొత్తం రుణాలు',
+    linesManagement: 'లైన్ల నిర్వహణ',
+    myLines: 'నా లైన్లు',
+    usersAgents: 'వినియోగదారులు & ఏజెంట్లు',
+    myAgents: 'నా ఏజెంట్లు',
+    allBorrowers: 'అన్ని రుణగ్రహీతలు',
+    myBorrowers: 'నా రుణగ్రహీతలు',
+    loanOverview: 'రుణాల సమీక్ష',
     activeLoans: 'క్రియాశీల రుణాలు',
-    totalDisbursed: 'మొత్తం పంపిణీ చేయబడింది',
-    totalCollected: 'మొత్తం వసూలు చేయబడింది',
+    payments: 'చెల్లింపులు',
+    reports: 'నివేదికలు',
+
+    // General
+    welcome: 'స్వాగతం',
+    search: 'వెతకండి',
+    searchBorrowersLoans: 'రుణగ్రహీతలు, రుణాలు వెతకండి...',
+    filter: 'ఫిల్టర్',
+    export: 'ఎగుమతి',
+    online: 'ఆన్‌లైన్',
+    offline: 'ఆఫ్‌లైన్',
+
+    // Dashboard
+    totalLoans: 'మొత్తం రుణాలు',
+    totalLines: 'మొత్తం లైన్లు',
+    totalDisbursed: 'మొత్తం పంపిణీ',
+    totalCollected: 'మొత్తం వసూలు',
+    netProfit: 'నికర లాభం',
+    activeBorrowers: 'క్రియాశీల రుణగ్రహీతలు',
+    overdueLoans: 'గడువు దాటిన రుణాలు',
     pendingCollections: 'పెండింగ్ వసూళ్లు',
     quickActions: 'త్వరిత చర్యలు',
     recentActivity: 'ఇటీవలి కార్యకలాపం',
     newLoan: 'కొత్త రుణం',
-    recordPayment: 'చెల్లింపును రికార్డ్ చేయండి',
-    addBorrower: 'రుణగ్రహీతను జోడించండి',
-    viewReports: 'నివేదికలను వీక్షించండి',
-    search: 'వెతకండి',
-    filter: 'ఫిల్టర్',
-    export: 'ఎగుమతి',
+    recordPayment: 'చెల్లింపు రికార్డ్',
+    addBorrower: 'రుణగ్రహీతను జోడించు',
+    viewReports: 'నివేదికలు చూడండి',
+    thisMonth: 'ఈ నెల',
+    fromLastMonth: 'గత నెల నుండి',
+
+    // Status
     status: 'స్థితి',
-    amount: 'మొత్తం',
-    balance: 'బ్యాలెన్స్',
-    dueDate: 'గడువు తేదీ',
-    actions: 'చర్యలు',
     active: 'క్రియాశీలం',
     completed: 'పూర్తయింది',
     overdue: 'గడువు దాటింది',
     pending: 'పెండింగ్',
+    paid: 'చెల్లించబడింది',
+    partial: 'పాక్షికం',
+
+    // Common fields
+    amount: 'మొత్తం',
+    balance: 'బ్యాలెన్స్',
+    dueDate: 'గడువు తేదీ',
+    actions: 'చర్యలు',
     name: 'పేరు',
     phone: 'ఫోన్',
     email: 'ఇమెయిల్',
     address: 'చిరునామా',
+    date: 'తేదీ',
+
+    // Buttons
     save: 'సేవ్ చేయండి',
     cancel: 'రద్దు చేయండి',
     delete: 'తొలగించండి',
@@ -132,10 +205,17 @@ const translations: Record<Language, Record<string, string>> = {
     view: 'వీక్షించండి',
     close: 'మూసివేయండి',
     confirm: 'నిర్ధారించండి',
+    add: 'జోడించండి',
+    update: 'నవీకరించండి',
+    create: 'సృష్టించండి',
+
+    // Messages
     success: 'విజయవంతం',
     error: 'లోపం',
     loading: 'లోడ్ అవుతోంది',
     noData: 'డేటా అందుబాటులో లేదు',
+
+    // Loan fields
     principal: 'అసలు',
     interest: 'వడ్డీ',
     tenure: 'కాలవ్యవధి',
@@ -149,7 +229,9 @@ const translations: Record<Language, Record<string, string>> = {
     lineName: 'లైన్ పేరు',
     totalAmount: 'మొత్తం మొత్తం',
     currentBalance: 'ప్రస్తుత బ్యాలెన్స్',
-    availableCredit: 'అందుబాటులో ఉన్న క్రెడిట్',
+    availableCredit: 'అందుబాటులో క్రెడిట్',
+    paidAmount: 'చెల్లించిన మొత్తం',
+    remainingAmount: 'మిగిలిన మొత్తం',
   }
 };
 

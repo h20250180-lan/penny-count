@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { useLanguage } from './contexts/LanguageContext';
 import { OfflineProvider } from './components/offline/OfflineManager';
 import { LoginForm } from './components/auth/LoginForm';
 import { Sidebar } from './components/layout/Sidebar';
@@ -18,6 +19,7 @@ import { Settings } from './components/settings/Settings';
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
+  const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState('dashboard');
 
   if (isLoading) {
@@ -25,7 +27,7 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Penny Count...</p>
+          <p className="text-gray-600">{t('loading')} Penny Count...</p>
         </div>
       </div>
     );
@@ -38,29 +40,29 @@ const AppContent: React.FC = () => {
   const getSectionTitle = () => {
     switch (activeSection) {
       case 'dashboard':
-        return 'Dashboard';
+        return t('dashboard');
       case 'lines':
-        return user.role === 'owner' ? 'Lines Management' : 'My Lines';
+        return user.role === 'owner' ? t('linesManagement') : t('myLines');
       case 'users':
-        return 'Users & Agents';
+        return t('usersAgents');
       case 'agents':
-        return 'My Agents';
+        return t('myAgents');
       case 'borrowers':
-        return user.role === 'agent' ? 'My Borrowers' : 'All Borrowers';
+        return user.role === 'agent' ? t('myBorrowers') : t('allBorrowers');
       case 'loans':
-        return user.role === 'agent' ? 'Active Loans' : 'Loan Overview';
+        return user.role === 'agent' ? t('activeLoans') : t('loanOverview');
       case 'collections':
-        return 'Collections';
+        return t('collections');
       case 'payments':
-        return 'Payments';
+        return t('payments');
       case 'commissions':
-        return 'Commissions';
+        return t('commissions');
       case 'analytics':
-        return user.role === 'co-owner' ? 'Reports' : 'Analytics';
+        return user.role === 'co-owner' ? t('reports') : t('analytics');
       case 'settings':
-        return 'Settings';
+        return t('settings');
       default:
-        return 'Dashboard';
+        return t('dashboard');
     }
   };
 
