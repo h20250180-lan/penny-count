@@ -70,53 +70,59 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
     <motion.div
       initial={{ x: -280 }}
       animate={{ x: 0 }}
-      className="w-64 bg-white border-r border-gray-200 flex flex-col h-full"
+      className="w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 flex flex-col h-full shadow-lg"
     >
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200/50">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-sm">
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
+            <span className="text-white font-bold text-lg">
               {user.name.split(' ').map(n => n[0]).join('')}
             </span>
           </div>
           <div>
-            <h2 className="font-semibold text-gray-800">{user.name}</h2>
-            <p className="text-sm text-gray-500 capitalize">{user.role}</p>
+            <h2 className="font-bold text-gray-900">{user.name}</h2>
+            <p className="text-xs font-medium text-emerald-600 capitalize px-2 py-0.5 bg-emerald-50 rounded-full inline-block">{user.role}</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
         {navigationItems.map((item) => (
           <motion.button
             key={item.id}
             onClick={() => onSectionChange(item.id)}
-            className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+            className={`w-full flex items-center space-x-3 p-3.5 rounded-xl transition-all duration-200 ${
               activeSection === item.id
-                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200 scale-105'
+                : 'text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-md'
             }`}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ x: 4 }}
             whileTap={{ scale: 0.98 }}
           >
-            <item.icon className="w-5 h-5" />
-            <span className="font-medium">{item.label}</span>
+            <item.icon className={`w-5 h-5 ${activeSection === item.id ? 'text-white' : ''}`} />
+            <span className="font-semibold text-sm">{item.label}</span>
+            {activeSection === item.id && (
+              <motion.div
+                layoutId="activeIndicator"
+                className="ml-auto w-2 h-2 bg-white rounded-full"
+              />
+            )}
           </motion.button>
         ))}
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200/50 bg-white">
         <motion.button
           onClick={logout}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.02, x: 4 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center space-x-3 p-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+          className="w-full flex items-center space-x-3 p-3.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 shadow-sm hover:shadow-md"
         >
           <LogOut className="w-5 h-5" />
-          <span className="font-medium">{t('logout')}</span>
+          <span className="font-semibold text-sm">{t('logout')}</span>
         </motion.button>
       </div>
     </motion.div>

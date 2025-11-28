@@ -107,42 +107,43 @@ export const RecentActivity: React.FC<{ onViewAll?: (section: string) => void }>
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 p-6"
     >
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-800">{t('recentActivity')}</h2>
+        <h2 className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{t('recentActivity')}</h2>
         <button
           onClick={() => {
             if (onViewAll) onViewAll('loans');
             else window.dispatchEvent(new CustomEvent('navigate', { detail: { section: 'loans' } }));
           }}
-          className="text-emerald-600 hover:text-emerald-700 text-sm font-medium"
+          className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 px-3 py-1.5 rounded-lg hover:bg-emerald-50 transition-all duration-200"
         >
-          {t('view')} {t('loans')}
+          {t('view')} {t('loans')} →
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {activities.map((activity, index) => (
           <motion.div
             key={activity.id}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
-            className={`flex items-start space-x-4 p-4 rounded-lg border ${getStatusColor(activity.status)}`}
+            whileHover={{ scale: 1.02, x: 4 }}
+            className={`flex items-start space-x-4 p-4 rounded-xl border shadow-sm hover:shadow-md transition-all duration-200 ${getStatusColor(activity.status)}`}
           >
-            <div className="flex-shrink-0 p-2 bg-white rounded-full border border-gray-200">
+            <div className="flex-shrink-0 p-2.5 bg-white rounded-xl border border-gray-200 shadow-sm">
               {getActivityIcon(activity.type)}
             </div>
-            
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-800">{activity.title}</h3>
-                <span className="text-xs text-gray-500">{activity.time}</span>
+                <h3 className="text-sm font-bold text-gray-900">{activity.title}</h3>
+                <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{activity.time}</span>
               </div>
-              <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+              <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">{activity.description}</p>
               {activity.amount && (
-                <p className="text-sm font-semibold text-gray-800 mt-1">
+                <p className="text-sm font-bold text-gray-900 mt-2 bg-gray-100 inline-block px-2 py-1 rounded-lg">
                   ₹{activity.amount.toLocaleString()}
                 </p>
               )}

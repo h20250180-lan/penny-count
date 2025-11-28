@@ -160,31 +160,42 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: index * 0.1 }}
-          whileHover={{ scale: 1.02 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+          whileHover={{ y: -4, scale: 1.01 }}
+          className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-2xl transition-all duration-300 overflow-hidden group"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className={`p-3 rounded-lg ${card.color}`}>
-              <card.icon className="w-6 h-6 text-white" />
+          {/* Decorative gradient overlay */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-100/30 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-3 rounded-xl ${card.color} shadow-md transform group-hover:scale-110 transition-transform duration-300`}>
+                <card.icon className="w-6 h-6 text-white" />
+              </div>
+              {card.trend === 'up' && (
+                <div className="flex items-center space-x-1 bg-green-50 px-2 py-1 rounded-full">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                </div>
+              )}
+              {card.trend === 'down' && (
+                <div className="flex items-center space-x-1 bg-red-50 px-2 py-1 rounded-full">
+                  <TrendingDown className="w-4 h-4 text-red-600" />
+                </div>
+              )}
             </div>
-            {card.trend === 'up' && (
-              <TrendingUp className="w-5 h-5 text-green-500" />
-            )}
-            {card.trend === 'down' && (
-              <TrendingDown className="w-5 h-5 text-red-500" />
-            )}
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-gray-600 mb-1">{card.title}</h3>
-            <p className="text-2xl font-bold text-gray-800 mb-2">{card.value}</p>
-            <p className={`text-sm ${
-              card.trend === 'up' ? 'text-green-600' : 
-              card.trend === 'down' ? 'text-red-600' : 
-              'text-gray-500'
-            }`}>
-              {card.change}
-            </p>
+
+            <div>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{card.title}</h3>
+              <p className="text-3xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text">{card.value}</p>
+              <div className="flex items-center">
+                <p className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  card.trend === 'up' ? 'bg-green-50 text-green-700' :
+                  card.trend === 'down' ? 'bg-red-50 text-red-700' :
+                  'bg-gray-50 text-gray-600'
+                }`}>
+                  {card.change}
+                </p>
+              </div>
+            </div>
           </div>
         </motion.div>
       ))}

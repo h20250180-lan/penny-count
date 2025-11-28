@@ -96,24 +96,24 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 flex">
       {/* Sidebar */}
       <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-      
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar title={getSectionTitle()} />
-        
+
         {/* Content Area */}
         <div className="flex-1 overflow-auto">
-          <div className="p-6">
+          <div className="p-6 lg:p-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
               >
                 {renderMainContent()}
               </motion.div>

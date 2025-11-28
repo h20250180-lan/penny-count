@@ -21,22 +21,22 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
     <motion.div
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between"
+      className="bg-white/90 backdrop-blur-xl border-b border-gray-200/60 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-40"
     >
       {/* Left section */}
       <div className="flex items-center space-x-4">
-        <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-        
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{title}</h1>
+
         {/* Online/Offline indicator */}
-        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
+        <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm ${
           isOnline
-            ? 'bg-green-100 text-green-700'
-            : 'bg-red-100 text-red-700'
+            ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200'
+            : 'bg-gradient-to-r from-red-50 to-orange-50 text-red-700 border border-red-200'
         }`}>
           {isOnline ? (
-            <Wifi className="w-4 h-4" />
+            <Wifi className="w-3.5 h-3.5" />
           ) : (
-            <WifiOff className="w-4 h-4" />
+            <WifiOff className="w-3.5 h-3.5" />
           )}
           <span>{isOnline ? t('online') : t('offline')}</span>
         </div>
@@ -50,7 +50,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
           <input
             type="text"
             placeholder={t('searchBorrowersLoans')}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none w-64"
+            className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none w-64 transition-all duration-200"
           />
         </div>
 

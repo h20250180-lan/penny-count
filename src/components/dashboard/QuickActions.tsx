@@ -95,22 +95,27 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ onAction }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.4 }}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+      className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 p-6"
     >
-      <h2 className="text-lg font-semibold text-gray-800 mb-6">{t('quickActions')}</h2>
-      
+      <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+        <span className="bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{t('quickActions')}</span>
+      </h2>
+
       <div className="grid grid-cols-2 gap-4">
-        {actions.map((action) => (
+        {actions.map((action, index) => (
           <motion.button
             key={action.id}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: index * 0.1 }}
+            whileHover={{ scale: 1.05, y: -4 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => onAction(action.id)}
-            className={`p-4 border rounded-lg text-center transition-colors ${getColorClasses(action.color)}`}
+            className={`p-5 rounded-2xl text-center transition-all duration-300 shadow-md hover:shadow-xl group ${getColorClasses(action.color)}`}
           >
-            <action.icon className="w-8 h-8 mx-auto mb-2" />
-            <div className="font-medium">{action.title}</div>
-            <div className="text-sm mt-1 opacity-75">{action.description}</div>
+            <action.icon className="w-8 h-8 mx-auto mb-3 group-hover:scale-110 transition-transform duration-300" />
+            <div className="font-bold text-sm">{action.title}</div>
+            <div className="text-xs mt-1.5 opacity-80">{action.description}</div>
           </motion.button>
         ))}
       </div>
