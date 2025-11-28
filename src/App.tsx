@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
 import { OfflineProvider } from './components/offline/OfflineManager';
 import { LineProvider } from './contexts/LineContext';
+import { LocationProvider } from './contexts/LocationContext';
 import { LineSelector } from './components/line-selector/LineSelector';
 import { LoginForm } from './components/auth/LoginForm';
 import { Sidebar } from './components/layout/Sidebar';
@@ -18,6 +19,7 @@ import { Collections } from './components/collections/Collections';
 import { Commissions } from './components/commissions/Commissions';
 import { Analytics } from './components/analytics/Analytics';
 import { Settings } from './components/settings/Settings';
+import { AgentLocationMap } from './components/location/AgentLocationMap';
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -61,6 +63,8 @@ const AppContent: React.FC = () => {
         return t('commissions');
       case 'analytics':
         return user.role === 'co-owner' ? t('reports') : t('analytics');
+      case 'locations':
+        return 'Agent Locations';
       case 'settings':
         return t('settings');
       default:
@@ -90,6 +94,8 @@ const AppContent: React.FC = () => {
         return <Commissions />;
       case 'analytics':
         return <Analytics />;
+      case 'locations':
+        return <AgentLocationMap />;
       case 'settings':
         return <Settings />;
       default:
@@ -133,8 +139,10 @@ function App() {
       <OfflineProvider>
         <AuthProvider>
           <LineProvider>
-            <LineSelector />
-            <AppContent />
+            <LocationProvider>
+              <LineSelector />
+              <AppContent />
+            </LocationProvider>
           </LineProvider>
         </AuthProvider>
       </OfflineProvider>

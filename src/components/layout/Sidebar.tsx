@@ -9,7 +9,8 @@ import {
   Settings,
   LogOut,
   Building2,
-  Wallet
+  Wallet,
+  MapPin
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -29,6 +30,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
       ...baseItems,
       { id: 'lines', label: t('linesManagement'), icon: Building2 },
       { id: 'users', label: t('usersAgents'), icon: Users },
+      { id: 'locations', label: 'Agent Locations', icon: MapPin },
       { id: 'borrowers', label: t('allBorrowers'), icon: UserCheck },
       { id: 'loans', label: t('loanOverview'), icon: CreditCard },
       { id: 'analytics', label: t('analytics'), icon: TrendingUp },
@@ -41,6 +43,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
       ...baseItems,
       { id: 'lines', label: t('myLines'), icon: Building2 },
       { id: 'agents', label: t('myAgents'), icon: Users },
+      { id: 'locations', label: 'Agent Locations', icon: MapPin },
       { id: 'borrowers', label: t('borrowers'), icon: UserCheck },
       { id: 'loans', label: t('loans'), icon: CreditCard },
       { id: 'commissions', label: t('commissions'), icon: Wallet },
