@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Plus, 
-  CreditCard, 
+import {
+  Plus,
+  CreditCard,
   Calendar,
   DollarSign,
   TrendingUp,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Loan, Borrower } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -114,6 +115,7 @@ const emptyBorrowerMap: { [key: string]: string } = {};
 
 export const LoansManagement: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [loans, setLoans] = useState<Loan[]>(mockLoans);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');

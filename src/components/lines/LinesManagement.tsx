@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   Plus,
   Edit,
   Trash2,
@@ -10,10 +10,12 @@ import {
 } from 'lucide-react';
 import { Line, User } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 
 export const LinesManagement: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [lines, setLines] = useState<Line[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,7 +170,7 @@ export const LinesManagement: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="text-gray-500">Loading lines...</div>;
+    return <div className="text-gray-500">{t('loading')}...</div>;
   }
 
   if (error) {
@@ -186,7 +188,7 @@ export const LinesManagement: React.FC = () => {
             onClick={() => setShowCreateModal(true)}
             className="flex items-center bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
           >
-            <Plus className="w-5 h-5 mr-2" /> Add New Line
+            <Plus className="w-5 h-5 mr-2" /> {t('addNewLine')}
           </button>
         )}
       </div>
@@ -211,7 +213,7 @@ export const LinesManagement: React.FC = () => {
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-red-100 text-red-700'
                   }`}>
-                    {line.isActive ? 'Active' : 'Inactive'}
+                    {line.isActive ? t('active') : 'Inactive'}
                   </span>
                 </div>
                 <p className="text-sm text-gray-500">
@@ -300,7 +302,7 @@ export const LinesManagement: React.FC = () => {
                   className="flex-1 bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 disabled:opacity-60"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>Delete</span>
+                  <span>{t('delete')}</span>
                 </motion.button>
               </div>
             )}
@@ -316,11 +318,11 @@ export const LinesManagement: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-md"
           >
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Line</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">{t('addNewLine')}</h2>
             <form className="space-y-4" onSubmit={handleCreateLineSubmit}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Line Name
+                  {t('lineName')}
                 </label>
                 <input
                   type="text"
@@ -332,7 +334,7 @@ export const LinesManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Initial Capital
+                  {t('principal')}
                 </label>
                 <input
                   type="number"
@@ -344,10 +346,10 @@ export const LinesManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assign Co-Owner (Optional)
+                  {t('coOwner')} ({t('optional')})
                 </label>
                 <select name="coOwnerId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
-                  <option value="">Select Co-Owner</option>
+                  <option value="">{t('selectOption')}</option>
                   {users.filter(u => u.role === 'co-owner').map(user => (
                     <option key={user.id} value={user.id}>{user.name}</option>
                   ))}
@@ -355,10 +357,10 @@ export const LinesManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assign Agent
+                  {t('selectAgent')}
                 </label>
                 <select name="agentId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
-                  <option value="">Select Agent</option>
+                  <option value="">{t('selectAgent')}</option>
                   {users.filter(u => u.role === 'agent').map(user => (
                     <option key={user.id} value={user.id}>{user.name}</option>
                   ))}
@@ -370,14 +372,14 @@ export const LinesManagement: React.FC = () => {
                   onClick={() => setShowCreateModal(false)}
                   className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors disabled:opacity-60"
                   disabled={opLoading}
                 >
-                  {opLoading ? 'Creating...' : 'Create Line'}
+                  {opLoading ? `${t('loading')}...` : t('create')}
                 </button>
               </div>
             </form>
@@ -389,10 +391,10 @@ export const LinesManagement: React.FC = () => {
       {showEditModal && editingLine && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Edit Line</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">{t('editLine')}</h2>
             <form className="space-y-4" onSubmit={handleUpdateLineSubmit}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Line Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('lineName')}</label>
                 <input name="name" defaultValue={editingLine.name} required className="w-full px-3 py-2 border rounded" />
               </div>
               <div>

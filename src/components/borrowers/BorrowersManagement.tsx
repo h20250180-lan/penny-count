@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Plus, 
-  Edit, 
-  Phone, 
+import {
+  Plus,
+  Edit,
+  Phone,
   MapPin,
   AlertTriangle,
   CheckCircle,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Borrower } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 import { Line } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
@@ -26,6 +27,7 @@ import { useToast } from '../../contexts/ToastContext';
 
 export const BorrowersManagement: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [borrowers, setBorrowers] = useState<Borrower[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
   const [loading, setLoading] = useState(true);
@@ -130,18 +132,18 @@ export const BorrowersManagement: React.FC = () => {
   const getTitle = () => {
     switch (user?.role) {
       case 'owner':
-        return 'All Borrowers';
+        return t('allBorrowers');
       case 'co-owner':
-        return 'Borrowers';
+        return t('borrowers');
       case 'agent':
-        return 'My Borrowers';
+        return t('myBorrowers');
       default:
-        return 'Borrowers';
+        return t('borrowers');
     }
   };
 
   if (loading) {
-    return <div className="text-gray-500">Loading borrowers...</div>;
+    return <div className="text-gray-500">{t('loading')}...</div>;
   }
 
   if (error) {
@@ -173,7 +175,7 @@ export const BorrowersManagement: React.FC = () => {
             className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
           >
             <Plus className="w-5 h-5" />
-            <span>Add Borrower</span>
+            <span>{t('addBorrower')}</span>
           </motion.button>
         )}
       </motion.div>
@@ -408,7 +410,7 @@ export const BorrowersManagement: React.FC = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Add New Borrower</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">{t('addNewBorrower')}</h2>
             <form className="space-y-4" onSubmit={handleCreateBorrowerSubmit}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -495,7 +497,7 @@ export const BorrowersManagement: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
                 >
-                  Add Borrower
+                  {t('addBorrower')}
                 </button>
               </div>
             </form>
