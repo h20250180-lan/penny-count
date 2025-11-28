@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { OfflineProvider } from './components/offline/OfflineManager';
 import { LoginForm } from './components/auth/LoginForm';
 import { Sidebar } from './components/layout/Sidebar';
@@ -124,11 +125,13 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <OfflineProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </OfflineProvider>
+    <ThemeProvider>
+      <OfflineProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </OfflineProvider>
+    </ThemeProvider>
   );
 }
 
