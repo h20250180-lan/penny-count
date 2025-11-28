@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
 import { OfflineProvider } from './components/offline/OfflineManager';
+import { LineProvider } from './contexts/LineContext';
+import { LineSelector } from './components/line-selector/LineSelector';
 import { LoginForm } from './components/auth/LoginForm';
 import { Sidebar } from './components/layout/Sidebar';
 import { TopBar } from './components/layout/TopBar';
@@ -130,7 +132,10 @@ function App() {
     <ThemeProvider>
       <OfflineProvider>
         <AuthProvider>
-          <AppContent />
+          <LineProvider>
+            <LineSelector />
+            <AppContent />
+          </LineProvider>
         </AuthProvider>
       </OfflineProvider>
     </ThemeProvider>

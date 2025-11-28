@@ -14,8 +14,16 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
 
   const handleQuickAction = (action: string) => {
     console.log('Quick action triggered:', action);
-    // Map quick actions to navigation or modal triggers
-    if (action === 'create-line') {
+
+    if (action === 'collect-payment') {
+      onViewAll?.('collections');
+    } else if (action === 'new-loan') {
+      onViewAll?.('loans');
+    } else if (action === 'add-borrower') {
+      onViewAll?.('borrowers');
+    } else if (action === 'sync-data') {
+      console.log('Syncing offline data...');
+    } else if (action === 'create-line') {
       onViewAll?.('lines');
     } else if (action === 'add-agent') {
       onViewAll?.('users');

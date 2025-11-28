@@ -19,6 +19,7 @@ import {
 import { Borrower } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useLineContext } from '../../contexts/LineContext';
 import { dataService } from '../../services/dataService';
 import { Line } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
@@ -28,6 +29,7 @@ import { useToast } from '../../contexts/ToastContext';
 export const BorrowersManagement: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { selectedLine } = useLineContext();
   const [borrowers, setBorrowers] = useState<Borrower[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,20 +58,24 @@ export const BorrowersManagement: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     loadBorrowers();
   }, []);
 
   const filteredBorrowers = borrowers.filter(borrower => {
+    if (user?.role === 'agent' && selectedLine) {
+      if (borrower.lineId !== selectedLine.id) return false;
+    }
+
     const matchesSearch = borrower.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          borrower.phone.includes(searchTerm) ||
                          borrower.address.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     let matchesRisk = true;
     if (riskFilter === 'high-risk') matchesRisk = borrower.isHighRisk;
     else if (riskFilter === 'defaulter') matchesRisk = borrower.isDefaulter;
     else if (riskFilter === 'good') matchesRisk = !borrower.isHighRisk && !borrower.isDefaulter;
-    
+
     return matchesSearch && matchesRisk;
   });
 
@@ -80,12 +86,22 @@ export const BorrowersManagement: React.FC = () => {
   const handleCreateBorrowerSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
+
+    const lineId = formData.get('lineId') as string;
+
+    if (user?.role === 'agent' && selectedLine && lineId !== selectedLine.id) {
+      pushToast({
+        type: 'error',
+        message: `You can only add borrowers to your selected line: ${selectedLine.name}`
+      });
+      return;
+    }
+
     const newBorrower = {
       name: formData.get('name') as string,
       phone: formData.get('phone') as string,
       address: formData.get('address') as string,
-      lineId: formData.get('lineId') as string,
+      lineId: lineId,
       isHighRisk: false,
       isDefaulter: false
     };
@@ -93,12 +109,13 @@ export const BorrowersManagement: React.FC = () => {
     try {
       const createdBorrower = await dataService.createBorrower(newBorrower);
       setBorrowers([...borrowers, createdBorrower]);
-      // Refresh lines so borrower counts/metrics update
       const linesData = await dataService.getLines();
       setLines(linesData);
       setShowCreateModal(false);
+      pushToast({ type: 'success', message: 'Borrower created successfully' });
     } catch (error) {
       console.error('Error creating borrower:', error);
+      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to create borrower' });
     }
   };
 
@@ -452,18 +469,27 @@ export const BorrowersManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Line Assignment
                 </label>
-                <select name="lineId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="">Select Line</option>
+                {user?.role === 'agent' && selectedLine ? (
+                  <div className="w-full px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-xl flex items-center space-x-3">
+                    <Wallet className="w-5 h-5 text-emerald-600" />
+                    <div>
+                      <p className="font-bold text-emerald-700">{selectedLine.name}</p>
+                      <p className="text-xs text-emerald-600">Your selected line</p>
+                    </div>
+                    <input type="hidden" name="lineId" value={selectedLine.id} />
+                  </div>
+                ) : (
+                  <select name="lineId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
+                    <option value="">Select Line</option>
                     {lines && lines.length > 0 ? (
-                      // For agents, limit to lines assigned to this agent
-                      (user?.role === 'agent' ? lines.filter(l => l.agentId === user.id) : lines)
-                      .map(l => (
+                      lines.map(l => (
                         <option key={l.id} value={l.id}>{l.name}</option>
                       ))
                     ) : (
                       <option value="">No lines available</option>
                     )}
-                </select>
+                  </select>
+                )}
               </div>
               <div className="flex items-center space-x-4">
                 <motion.button
