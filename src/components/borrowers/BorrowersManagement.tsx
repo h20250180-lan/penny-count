@@ -14,7 +14,8 @@ import {
   CreditCard,
   TrendingUp,
   Users,
-  UserX
+  UserX,
+  Wallet
 } from 'lucide-react';
 import { Borrower } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
