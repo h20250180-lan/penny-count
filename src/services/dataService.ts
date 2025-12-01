@@ -694,7 +694,16 @@ class DataService {
       .order('name');
 
     if (error) throw error;
-    return data || [];
+
+    return (data || []).map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      description: cat.description,
+      budgetLimit: cat.budget_limit ? Number(cat.budget_limit) : undefined,
+      requiresApproval: cat.requires_approval,
+      isActive: cat.is_active,
+      createdAt: new Date(cat.created_at)
+    }));
   }
 
   async getExpenses(): Promise<any[]> {
