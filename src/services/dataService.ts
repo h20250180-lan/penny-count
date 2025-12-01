@@ -853,7 +853,17 @@ class DataService {
       return newAccount;
     }
 
-    return data;
+    return {
+      id: data.id,
+      accountDate: data.account_date,
+      lineId: data.line_id,
+      openingBalance: data.opening_balance,
+      isLocked: data.is_locked,
+      lockedBy: data.locked_by,
+      lockedAt: data.locked_at,
+      createdBy: data.created_by,
+      createdAt: data.created_at
+    };
   }
 
   async createDailyAccount(date: string, lineId?: string): Promise<any> {
@@ -871,19 +881,48 @@ class DataService {
       .single();
 
     if (error) throw error;
-    return data;
+
+    return {
+      id: data.id,
+      accountDate: data.account_date,
+      lineId: data.line_id,
+      openingBalance: data.opening_balance,
+      isLocked: data.is_locked,
+      lockedBy: data.locked_by,
+      lockedAt: data.locked_at,
+      createdBy: data.created_by,
+      createdAt: data.created_at
+    };
   }
 
   async updateDailyAccount(id: string, updates: any): Promise<any> {
+    const snakeCaseUpdates: any = {};
+
+    if (updates.openingBalance !== undefined) snakeCaseUpdates.opening_balance = updates.openingBalance;
+    if (updates.isLocked !== undefined) snakeCaseUpdates.is_locked = updates.isLocked;
+    if (updates.lockedBy !== undefined) snakeCaseUpdates.locked_by = updates.lockedBy;
+    if (updates.lockedAt !== undefined) snakeCaseUpdates.locked_at = updates.lockedAt;
+
     const { data, error } = await supabase
       .from('daily_accounts')
-      .update(updates)
+      .update(snakeCaseUpdates)
       .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+
+    return {
+      id: data.id,
+      accountDate: data.account_date,
+      lineId: data.line_id,
+      openingBalance: data.opening_balance,
+      isLocked: data.is_locked,
+      lockedBy: data.locked_by,
+      lockedAt: data.locked_at,
+      createdBy: data.created_by,
+      createdAt: data.created_at
+    };
   }
 
   async getPaymentMethods(lineId?: string): Promise<any[]> {
@@ -929,7 +968,23 @@ class DataService {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+    return (data || []).map(p => ({
+      id: p.id,
+      loanId: p.loan_id,
+      borrowerId: p.borrower_id,
+      paymentMethodId: p.payment_method_id,
+      amount: p.amount,
+      transactionId: p.transaction_id,
+      transactionStatus: p.transaction_status,
+      paymentTimestamp: p.payment_timestamp,
+      reconciled: p.reconciled,
+      reconciledBy: p.reconciled_by,
+      reconciledAt: p.reconciled_at,
+      notes: p.notes,
+      createdAt: p.created_at,
+      loan: p.loan,
+      borrower: p.borrower
+    }));
   }
 
   async reconcileQRPayment(paymentId: string): Promise<any> {
