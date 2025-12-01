@@ -303,6 +303,14 @@ const translations: Record<Language, Record<string, string>> = {
     noLoansMessage: 'Get started by creating your first loan',
     tryAdjustingFilters: 'Try adjusting your search or filters',
     remaining: 'remaining',
+
+    // Monitoring & Locations
+    dailyMonitoring: 'Daily Monitoring',
+    agentLocations: 'Agent Locations',
+
+    // App Name
+    appName: 'Penny Count',
+    financialManagement: 'Financial Management',
   },
   te: {
     // Navigation
@@ -588,6 +596,14 @@ const translations: Record<Language, Record<string, string>> = {
     noLoansMessage: 'మీ మొదటి రుణాన్ని సృష్టించడం ద్వారా ప్రారంభించండి',
     tryAdjustingFilters: 'మీ శోధన లేదా ఫిల్టర్‌లను సర్దుబాటు చేయండి',
     remaining: 'మిగిలినది',
+
+    // Monitoring & Locations
+    dailyMonitoring: 'రోజువారీ పర్యవేక్షణ',
+    agentLocations: 'ఏజెంట్ స్థానాలు',
+
+    // App Name
+    appName: 'పెన్నీ కౌంట్',
+    financialManagement: 'ఆర్థిక నిర్వహణ',
   }
 };
 

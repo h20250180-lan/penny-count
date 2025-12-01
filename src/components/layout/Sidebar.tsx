@@ -30,10 +30,10 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
   if (role === 'owner') {
     return [
       ...baseItems,
-      { id: 'owner-monitoring', label: 'Daily Monitoring', icon: BarChart3 },
+      { id: 'owner-monitoring', label: t('dailyMonitoring'), icon: BarChart3 },
       { id: 'lines', label: t('linesManagement'), icon: Building2 },
       { id: 'users', label: t('usersAgents'), icon: Users },
-      { id: 'locations', label: 'Agent Locations', icon: MapPin },
+      { id: 'locations', label: t('agentLocations'), icon: MapPin },
       { id: 'borrowers', label: t('allBorrowers'), icon: UserCheck },
       { id: 'loans', label: t('loanOverview'), icon: CreditCard },
       { id: 'expenses', label: t('expenses'), icon: Receipt },
@@ -47,7 +47,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
       ...baseItems,
       { id: 'lines', label: t('myLines'), icon: Building2 },
       { id: 'agents', label: t('myAgents'), icon: Users },
-      { id: 'locations', label: 'Agent Locations', icon: MapPin },
+      { id: 'locations', label: t('agentLocations'), icon: MapPin },
       { id: 'borrowers', label: t('borrowers'), icon: UserCheck },
       { id: 'loans', label: t('loans'), icon: CreditCard },
       { id: 'expenses', label: t('expenses'), icon: Receipt },
@@ -63,7 +63,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
     { id: 'loans', label: t('activeLoans'), icon: CreditCard },
     { id: 'collections', label: t('collections'), icon: Wallet },
     { id: 'payments', label: t('payments'), icon: TrendingUp },
-    { id: 'expenses', label: 'Expenses', icon: Receipt },
+    { id: 'expenses', label: t('expenses'), icon: Receipt },
   ];
 };
 
@@ -92,14 +92,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
             <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-teal-600 rounded-2xl blur-lg opacity-20 animate-pulse" />
             <img
               src="/ChatGPT Image Nov 28, 2025, 11_24_55 PM-Photoroom.png"
-              alt="Penny Count"
+              alt={t('appName')}
               className="relative w-20 lg:w-24 h-20 lg:h-24 drop-shadow-lg"
             />
           </div>
           <h1 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-teal-700 bg-clip-text text-transparent">
-            Penny Count
+            {t('appName')}
           </h1>
-          <p className="text-xs text-gray-500 mt-0.5">Financial Management</p>
+          <p className="text-xs text-gray-500 mt-0.5">{t('financialManagement')}</p>
         </div>
 
         <div className="relative flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-xl p-2.5 shadow-lg border border-gray-100">

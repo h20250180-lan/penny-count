@@ -34,7 +34,7 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">{t('loading')} Penny Count...</p>
+          <p className="text-gray-600">{t('loading')} {t('appName')}...</p>
         </div>
       </div>
     );
@@ -67,11 +67,11 @@ const AppContent: React.FC = () => {
       case 'analytics':
         return user.role === 'co-owner' ? t('reports') : t('analytics');
       case 'locations':
-        return 'Agent Locations';
+        return t('agentLocations');
       case 'expenses':
         return t('expenseManagement');
       case 'owner-monitoring':
-        return 'Daily Monitoring';
+        return t('dailyMonitoring');
       case 'settings':
         return t('settings');
       default:
