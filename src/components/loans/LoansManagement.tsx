@@ -122,7 +122,9 @@ export const LoansManagement: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>(emptyBorrowerMap);
+  const { pushToast } = useToast();
 
   const [lines, setLines] = React.useState<any[]>([]);
 
@@ -192,8 +194,6 @@ export const LoansManagement: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const { push: pushToast } = useToast();
-
   const handleCreateLoanSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -229,6 +229,65 @@ export const LoansManagement: React.FC = () => {
   const handleViewLoan = (loan: Loan) => {
     setSelectedLoan(loan);
     setShowDetailsModal(true);
+  };
+
+  const handleRecordPayment = (loan: Loan) => {
+    setSelectedLoan(loan);
+    setShowPaymentModal(true);
+  };
+
+  const handleSubmitPayment = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedLoan) return;
+
+    const formData = new FormData(e.currentTarget);
+    const amount = parseFloat(formData.get('amount') as string);
+    const method = formData.get('method') as string;
+    const notes = formData.get('notes') as string;
+
+    if (amount <= 0) {
+      pushToast({ type: 'error', message: 'Please enter a valid amount' });
+      return;
+    }
+
+    if (amount > selectedLoan.remainingAmount) {
+      pushToast({ type: 'error', message: 'Payment amount cannot exceed remaining amount' });
+      return;
+    }
+
+    try {
+      const paymentData = {
+        loanId: selectedLoan.id,
+        borrowerId: selectedLoan.borrowerId,
+        lineId: selectedLoan.lineId,
+        amount,
+        method,
+        collectedBy: user!.id,
+        notes,
+        paymentDate: new Date()
+      };
+
+      await dataService.createPayment(paymentData);
+
+      const updatedPaidAmount = selectedLoan.paidAmount + amount;
+      const updatedRemainingAmount = selectedLoan.remainingAmount - amount;
+      const updatedStatus = updatedRemainingAmount <= 0 ? 'completed' : selectedLoan.status;
+
+      const updatedLoan = await dataService.updateLoan(selectedLoan.id, {
+        paidAmount: updatedPaidAmount,
+        remainingAmount: updatedRemainingAmount,
+        status: updatedStatus,
+        ...(updatedStatus === 'completed' && { completedAt: new Date() })
+      });
+
+      setLoans(loans.map(l => l.id === selectedLoan.id ? updatedLoan : l));
+      setSelectedLoan(updatedLoan);
+      setShowPaymentModal(false);
+      pushToast({ type: 'success', message: `Payment of ₹${amount.toLocaleString()} recorded successfully` });
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to record payment' });
+    }
   };
 
   const getTitle = () => {
@@ -472,14 +531,17 @@ export const LoansManagement: React.FC = () => {
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleViewLoan(loan)}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="View Details"
                       >
                         <Eye className="w-4 h-4" />
                       </motion.button>
-                      {user?.role === 'agent' && (
+                      {user?.role === 'agent' && loan.status === 'active' && (
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                          onClick={() => handleRecordPayment(loan)}
+                          className="p-2 text-white bg-gradient-to-r from-orange-500 to-teal-600 hover:shadow-lg rounded-lg transition-all"
+                          title="Collect Payment"
                         >
                           <TrendingUp className="w-4 h-4" />
                         </motion.button>
@@ -697,7 +759,8 @@ export const LoansManagement: React.FC = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 bg-emerald-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center justify-center space-x-2"
+                    onClick={() => handleRecordPayment(selectedLoan)}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-teal-600 text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all flex items-center justify-center space-x-2"
                   >
                     <TrendingUp className="w-5 h-5" />
                     <span>Record Payment</span>
@@ -712,6 +775,124 @@ export const LoansManagement: React.FC = () => {
                   </motion.button>
                 </div>
               )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && selectedLoan && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent">
+                  Record Payment
+                </h2>
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Loan Summary */}
+              <div className="bg-gradient-to-br from-orange-50 to-teal-50 rounded-xl p-4 mb-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Borrower</p>
+                    <p className="font-semibold text-gray-800">{borrowerMap[selectedLoan.borrowerId]}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Loan ID</p>
+                    <p className="font-semibold text-gray-800">{selectedLoan.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Total Amount</p>
+                    <p className="font-semibold text-gray-800">₹{selectedLoan.totalAmount.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-1">Remaining</p>
+                    <p className="font-bold text-orange-600">₹{selectedLoan.remainingAmount.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmitPayment} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Amount <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+                    <input
+                      type="number"
+                      name="amount"
+                      required
+                      step="0.01"
+                      min="0.01"
+                      max={selectedLoan.remainingAmount}
+                      placeholder="Enter amount"
+                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Maximum: ₹{selectedLoan.remainingAmount.toLocaleString()}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Method <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="method"
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="upi">UPI</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="card">Card</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes (Optional)
+                  </label>
+                  <textarea
+                    name="notes"
+                    rows={3}
+                    placeholder="Add any notes about this payment..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
+                  />
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowPaymentModal(false)}
+                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-teal-600 text-white font-medium rounded-xl hover:shadow-lg transition-all"
+                  >
+                    Record Payment
+                  </button>
+                </div>
+              </form>
             </div>
           </motion.div>
         </div>
