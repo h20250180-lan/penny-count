@@ -128,19 +128,36 @@ export const Collections: React.FC = () => {
   };
 
   const todayCollections = payments.filter(p => {
+    if (!p.receivedAt) return false;
     const today = new Date();
     const paymentDate = new Date(p.receivedAt);
     return paymentDate.toDateString() === today.toDateString();
   });
 
-  const totalToday = todayCollections.reduce((sum, p) => sum + p.amount, 0);
-  const cashToday = todayCollections.filter(p => p.method === 'cash').reduce((sum, p) => sum + p.amount, 0);
+  const totalToday = todayCollections.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const cashToday = todayCollections.filter(p => p.method === 'cash').reduce((sum, p) => sum + (p.amount || 0), 0);
   const digitalToday = totalToday - cashToday;
 
   // Add loading/error UI
-  if (loading) return <div className="text-gray-500">Loading payments...</div>;
-  if (error) return <div className="bg-red-100 text-red-700 p-2 rounded">{error}</div>;
-  if (!payments.length) return <div className="text-gray-500">No payments found.</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading payments...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+        <p className="font-semibold">Error loading payments</p>
+        <p className="text-sm mt-1">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -330,6 +347,13 @@ export const Collections: React.FC = () => {
         className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
       >
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Collections</h3>
+        {filteredPayments.length === 0 ? (
+          <div className="text-center py-12">
+            <Wallet className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg font-medium">No payments found</p>
+            <p className="text-gray-400 text-sm mt-2">Start collecting payments to see them here</p>
+          </div>
+        ) : (
         <div className="space-y-4">
           {filteredPayments.map((payment, index) => (
             <motion.div
@@ -355,17 +379,17 @@ export const Collections: React.FC = () => {
                     )}
                   </div>
                   <p className="text-sm text-gray-600">
-                    {borrowerNames[payment.borrowerId]} • Loan {payment.loanId}
+                    {borrowerNames[payment.borrowerId] || 'Unknown'} • Loan {payment.loanId}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {payment.receivedAt.toLocaleString()}
+                    {payment.receivedAt ? new Date(payment.receivedAt).toLocaleString() : 'N/A'}
                   </p>
                 </div>
               </div>
-              
+
               <div className="text-right">
                 <p className="text-xl font-bold text-emerald-600">
-                  ₹{payment.amount.toLocaleString()}
+                  ₹{(payment.amount || 0).toLocaleString()}
                 </p>
                 <div className="flex items-center space-x-1 text-sm text-gray-500">
                   <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getMethodColor(payment.method)}`}>
@@ -382,6 +406,7 @@ export const Collections: React.FC = () => {
             </motion.div>
           ))}
         </div>
+        )}
       </motion.div>
 
       {/* Collect Payment Modal */}
