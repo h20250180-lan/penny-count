@@ -718,7 +718,24 @@ class DataService {
       .order('expense_date', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+
+    return (data || []).map(exp => ({
+      id: exp.id,
+      lineId: exp.line_id,
+      categoryId: exp.category_id,
+      amount: Number(exp.amount),
+      expenseDate: new Date(exp.expense_date),
+      description: exp.description,
+      receiptUrl: exp.receipt_url,
+      paymentMethod: exp.payment_method,
+      submittedBy: exp.submitted_by,
+      approvedBy: exp.approved_by,
+      status: exp.status,
+      rejectionReason: exp.rejection_reason,
+      approvedAt: exp.approved_at ? new Date(exp.approved_at) : undefined,
+      paidAt: exp.paid_at ? new Date(exp.paid_at) : undefined,
+      createdAt: new Date(exp.created_at)
+    }));
   }
 
   async getExpensesByDate(date: string, lineId?: string): Promise<any[]> {
@@ -758,7 +775,24 @@ class DataService {
       .single();
 
     if (error) throw error;
-    return data;
+
+    return {
+      id: data.id,
+      lineId: data.line_id,
+      categoryId: data.category_id,
+      amount: Number(data.amount),
+      expenseDate: new Date(data.expense_date),
+      description: data.description,
+      receiptUrl: data.receipt_url,
+      paymentMethod: data.payment_method,
+      submittedBy: data.submitted_by,
+      approvedBy: data.approved_by,
+      status: data.status,
+      rejectionReason: data.rejection_reason,
+      approvedAt: data.approved_at ? new Date(data.approved_at) : undefined,
+      paidAt: data.paid_at ? new Date(data.paid_at) : undefined,
+      createdAt: new Date(data.created_at)
+    };
   }
 
   async updateExpense(id: string, updates: any): Promise<any> {
@@ -776,7 +810,24 @@ class DataService {
       .single();
 
     if (error) throw error;
-    return data;
+
+    return {
+      id: data.id,
+      lineId: data.line_id,
+      categoryId: data.category_id,
+      amount: Number(data.amount),
+      expenseDate: new Date(data.expense_date),
+      description: data.description,
+      receiptUrl: data.receipt_url,
+      paymentMethod: data.payment_method,
+      submittedBy: data.submitted_by,
+      approvedBy: data.approved_by,
+      status: data.status,
+      rejectionReason: data.rejection_reason,
+      approvedAt: data.approved_at ? new Date(data.approved_at) : undefined,
+      paidAt: data.paid_at ? new Date(data.paid_at) : undefined,
+      createdAt: new Date(data.created_at)
+    };
   }
 
   async getDailyAccount(date: string, lineId?: string): Promise<any> {
