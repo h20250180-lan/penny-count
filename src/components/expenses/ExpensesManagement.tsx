@@ -478,10 +478,19 @@ export const ExpensesManagement: React.FC = () => {
                       required
                     >
                       <option value="">Select Category</option>
-                      {categories.filter(c => c.isActive).map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
+                      {categories.length === 0 ? (
+                        <option value="" disabled>Loading categories...</option>
+                      ) : categories.filter(c => c.isActive).length === 0 ? (
+                        <option value="" disabled>No active categories available</option>
+                      ) : (
+                        categories.filter(c => c.isActive).map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))
+                      )}
                     </select>
+                    {categories.length > 0 && categories.filter(c => c.isActive).length === 0 && (
+                      <p className="text-xs text-red-500 mt-1">No active categories found. Please contact administrator.</p>
+                    )}
                   </div>
 
                   <div>
