@@ -12,7 +12,8 @@ import {
   Search,
   Filter,
   Eye,
-  Edit
+  Edit,
+  Edit2
 } from 'lucide-react';
 import { Loan, Borrower } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -120,6 +121,7 @@ export const LoansManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -273,6 +275,38 @@ export const LoansManagement: React.FC = () => {
   const handleViewLoan = (loan: Loan) => {
     setSelectedLoan(loan);
     setShowDetailsModal(true);
+  };
+
+  const handleEditLoan = (loan: Loan) => {
+    setSelectedLoan(loan);
+    setShowEditModal(true);
+  };
+
+  const handleEditLoanSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedLoan) return;
+
+    const formData = new FormData(e.currentTarget);
+    const amount = parseInt(formData.get('amount') as string);
+    const interestRate = parseFloat(formData.get('interestRate') as string);
+    const tenure = parseInt(formData.get('tenure') as string);
+
+    const updates = {
+      amount,
+      interestRate,
+      tenure
+    };
+
+    try {
+      const updatedLoan = await dataService.updateLoan(selectedLoan.id, updates);
+      setLoans(loans.map(l => l.id === updatedLoan.id ? updatedLoan : l));
+      setShowEditModal(false);
+      setSelectedLoan(null);
+      pushToast({ type: 'success', message: 'Loan updated successfully' });
+    } catch (error) {
+      console.error('Error updating loan:', error);
+      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to update loan' });
+    }
   };
 
   const handleRecordPayment = (loan: Loan) => {
@@ -613,6 +647,17 @@ export const LoansManagement: React.FC = () => {
                       >
                         <Eye className="w-4 h-4" />
                       </motion.button>
+                      {(user?.role === 'agent' || user?.role === 'owner' || user?.role === 'co-owner') && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleEditLoan(loan)}
+                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                          title="Edit Loan"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </motion.button>
+                      )}
                       {user?.role === 'agent' && loan.status === 'active' && (
                         <motion.button
                           whileHover={{ scale: 1.05 }}
@@ -1019,6 +1064,93 @@ export const LoansManagement: React.FC = () => {
                 </div>
               </form>
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit Loan Modal */}
+      {showEditModal && selectedLoan && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+          >
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Edit Loan</h2>
+            <form className="space-y-4" onSubmit={handleEditLoanSubmit}>
+              <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                <div className="text-sm text-gray-600">Borrower</div>
+                <div className="font-semibold text-gray-800">{borrowerMap[selectedLoan.borrowerId]}</div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Loan Amount (₹)
+                </label>
+                <input
+                  type="number"
+                  name="amount"
+                  defaultValue={selectedLoan.amount}
+                  placeholder="10000"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Interest Rate (%)
+                </label>
+                <input
+                  type="number"
+                  name="interestRate"
+                  step="0.1"
+                  defaultValue={selectedLoan.interestRate}
+                  placeholder="2.5"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tenure (Days)
+                </label>
+                <input
+                  type="number"
+                  name="tenure"
+                  defaultValue={selectedLoan.tenure}
+                  placeholder="30"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
+                  required
+                />
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <strong>Note:</strong> Editing loan details will recalculate the total amount based on the new principal and interest rate.
+                </p>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedLoan(null);
+                  }}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-amber-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-amber-600 transition-colors"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}

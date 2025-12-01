@@ -351,6 +351,32 @@ class DataService {
   async updateLoan(id: string, updates: Partial<Loan>): Promise<Loan> {
     const updateData: any = {};
     if (updates.status !== undefined) updateData.status = updates.status;
+
+    if (updates.amount !== undefined || updates.interestRate !== undefined) {
+      const { data: currentLoan } = await supabase.from('loans').select('principal, interest_rate, amount_paid').eq('id', id).single();
+
+      const principal = updates.amount !== undefined ? updates.amount : Number(currentLoan?.principal || 0);
+      const interestRate = updates.interestRate !== undefined ? updates.interestRate : Number(currentLoan?.interest_rate || 0);
+      const totalAmount = principal * (1 + interestRate / 100);
+      const paidAmount = Number(currentLoan?.amount_paid || 0);
+
+      updateData.principal = principal;
+      updateData.interest_rate = interestRate;
+      updateData.total_amount = totalAmount;
+      updateData.balance = totalAmount - paidAmount;
+    }
+
+    if (updates.tenure !== undefined) {
+      updateData.tenure = updates.tenure;
+      const { data: currentLoan } = await supabase.from('loans').select('disbursed_date').eq('id', id).single();
+      if (currentLoan) {
+        const disbursedDate = new Date(currentLoan.disbursed_date);
+        const dueDate = new Date(disbursedDate);
+        dueDate.setDate(dueDate.getDate() + updates.tenure);
+        updateData.due_date = dueDate.toISOString();
+      }
+    }
+
     if (updates.paidAmount !== undefined) {
       updateData.amount_paid = updates.paidAmount;
       const { data: loan } = await supabase.from('loans').select('total_amount').eq('id', id).single();
