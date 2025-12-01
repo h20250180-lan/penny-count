@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { useLanguage } from './contexts/LanguageContext';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { OfflineProvider } from './components/offline/OfflineManager';
 import { LineProvider } from './contexts/LineContext';
 import { LocationProvider } from './contexts/LocationContext';
@@ -69,7 +69,7 @@ const AppContent: React.FC = () => {
       case 'locations':
         return 'Agent Locations';
       case 'expenses':
-        return 'Expenses Management';
+        return t('expenseManagement');
       case 'owner-monitoring':
         return 'Daily Monitoring';
       case 'settings':
@@ -155,16 +155,18 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <ThemeProvider>
-      <OfflineProvider>
-        <AuthProvider>
-          <LineProvider>
-            <LocationProvider>
-              <LineSelector />
-              <AppContent />
-            </LocationProvider>
-          </LineProvider>
-        </AuthProvider>
-      </OfflineProvider>
+      <LanguageProvider>
+        <OfflineProvider>
+          <AuthProvider>
+            <LineProvider>
+              <LocationProvider>
+                <LineSelector />
+                <AppContent />
+              </LocationProvider>
+            </LineProvider>
+          </AuthProvider>
+        </OfflineProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }
