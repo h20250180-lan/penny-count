@@ -245,20 +245,27 @@ export const LoansManagement: React.FC = () => {
 
       // Create loan
       const amount = parseInt(formData.get('amount') as string);
-      const interestRate = parseFloat(formData.get('interestRate') as string);
-      const tenure = parseInt(formData.get('tenure') as string);
-      const totalAmount = amount + (amount * interestRate / 100);
+      const finalAmount = parseInt(formData.get('finalAmount') as string);
+      const tenureMonths = parseInt(formData.get('tenure') as string);
+
+      // Calculate monthly interest rate
+      const interestAmount = finalAmount - amount;
+      const monthlyInterestRate = (interestAmount / amount / tenureMonths) * 100;
+
+      // Calculate due date (tenure in months)
+      const dueDate = new Date();
+      dueDate.setMonth(dueDate.getMonth() + tenureMonths);
 
       const newLoan = {
         borrowerId,
         lineId: formData.get('lineId') as string,
         agentId: user!.id,
         amount,
-        interestRate,
-        tenure,
+        interestRate: monthlyInterestRate,
+        tenure: tenureMonths,
         repaymentFrequency: formData.get('repaymentFrequency') as 'daily' | 'weekly' | 'monthly',
-        totalAmount,
-        dueDate: new Date(Date.now() + tenure * 24 * 60 * 60 * 1000)
+        totalAmount: finalAmount,
+        dueDate
       };
 
       const createdLoan = await dataService.createLoan(newLoan);
@@ -288,13 +295,18 @@ export const LoansManagement: React.FC = () => {
 
     const formData = new FormData(e.currentTarget);
     const amount = parseInt(formData.get('amount') as string);
-    const interestRate = parseFloat(formData.get('interestRate') as string);
-    const tenure = parseInt(formData.get('tenure') as string);
+    const finalAmount = parseInt(formData.get('finalAmount') as string);
+    const tenureMonths = parseInt(formData.get('tenure') as string);
+
+    // Calculate monthly interest rate
+    const interestAmount = finalAmount - amount;
+    const monthlyInterestRate = (interestAmount / amount / tenureMonths) * 100;
 
     const updates = {
       amount,
-      interestRate,
-      tenure
+      interestRate: monthlyInterestRate,
+      totalAmount: finalAmount,
+      tenure: tenureMonths
     };
 
     try {
@@ -763,7 +775,7 @@ export const LoansManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loan Amount (₹)
+                  Principal Amount (₹)
                 </label>
                 <input
                   type="number"
@@ -775,28 +787,30 @@ export const LoansManagement: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Interest Rate (%)
+                  Final Amount to Collect (₹)
                 </label>
                 <input
                   type="number"
-                  name="interestRate"
-                  step="0.1"
-                  placeholder="2.5"
+                  name="finalAmount"
+                  placeholder="12000"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Total amount including interest</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tenure (Days)
+                  Tenure (Months)
                 </label>
                 <input
                   type="number"
                   name="tenure"
-                  placeholder="30"
+                  placeholder="3"
+                  min="1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Loan duration in months</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1085,7 +1099,7 @@ export const LoansManagement: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loan Amount (₹)
+                  Principal Amount (₹)
                 </label>
                 <input
                   type="number"
@@ -1099,31 +1113,33 @@ export const LoansManagement: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Interest Rate (%)
+                  Final Amount to Collect (₹)
                 </label>
                 <input
                   type="number"
-                  name="interestRate"
-                  step="0.1"
-                  defaultValue={selectedLoan.interestRate}
-                  placeholder="2.5"
+                  name="finalAmount"
+                  defaultValue={selectedLoan.totalAmount}
+                  placeholder="12000"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Total amount including interest</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tenure (Days)
+                  Tenure (Months)
                 </label>
                 <input
                   type="number"
                   name="tenure"
                   defaultValue={selectedLoan.tenure}
-                  placeholder="30"
+                  placeholder="3"
+                  min="1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Loan duration in months</p>
               </div>
 
               <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg">

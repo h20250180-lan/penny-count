@@ -352,12 +352,12 @@ class DataService {
     const updateData: any = {};
     if (updates.status !== undefined) updateData.status = updates.status;
 
-    if (updates.amount !== undefined || updates.interestRate !== undefined) {
-      const { data: currentLoan } = await supabase.from('loans').select('principal, interest_rate, amount_paid').eq('id', id).single();
+    if (updates.amount !== undefined || updates.interestRate !== undefined || updates.totalAmount !== undefined) {
+      const { data: currentLoan } = await supabase.from('loans').select('principal, interest_rate, total_amount, amount_paid').eq('id', id).single();
 
       const principal = updates.amount !== undefined ? updates.amount : Number(currentLoan?.principal || 0);
       const interestRate = updates.interestRate !== undefined ? updates.interestRate : Number(currentLoan?.interest_rate || 0);
-      const totalAmount = principal * (1 + interestRate / 100);
+      const totalAmount = updates.totalAmount !== undefined ? updates.totalAmount : Number(currentLoan?.total_amount || 0);
       const paidAmount = Number(currentLoan?.amount_paid || 0);
 
       updateData.principal = principal;
@@ -372,7 +372,8 @@ class DataService {
       if (currentLoan) {
         const disbursedDate = new Date(currentLoan.disbursed_date);
         const dueDate = new Date(disbursedDate);
-        dueDate.setDate(dueDate.getDate() + updates.tenure);
+        // Tenure is in months
+        dueDate.setMonth(dueDate.getMonth() + updates.tenure);
         updateData.due_date = dueDate.toISOString();
       }
     }
