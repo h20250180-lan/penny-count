@@ -27,6 +27,7 @@ export const Collections: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [borrowerNames, setBorrowerNames] = useState<{ [key: string]: string }>({});
 
   // Load data on component mount
   React.useEffect(() => {
@@ -34,15 +35,22 @@ export const Collections: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const paymentsData = await dataService.getPayments();
+        const [paymentsData, borrowersData] = await Promise.all([
+          dataService.getPayments(),
+          dataService.getBorrowers()
+        ]);
         setPayments(paymentsData);
+
+        const names: { [key: string]: string } = {};
+        borrowersData.forEach((b: any) => { names[b.id] = b.name; });
+        setBorrowerNames(names);
       } catch (err: any) {
         setError(err.message || 'Failed to load payments');
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadData();
   }, []);
 

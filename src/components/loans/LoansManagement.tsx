@@ -124,7 +124,7 @@ export const LoansManagement: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>(emptyBorrowerMap);
-  const { pushToast } = useToast();
+  const { push: pushToast } = useToast();
 
   const [lines, setLines] = React.useState<any[]>([]);
 
