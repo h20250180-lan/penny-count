@@ -116,7 +116,7 @@ const emptyBorrowerMap: { [key: string]: string } = {};
 export const LoansManagement: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
-  const [loans, setLoans] = useState<Loan[]>(mockLoans);
+  const [loans, setLoans] = useState<Loan[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -125,12 +125,14 @@ export const LoansManagement: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>(emptyBorrowerMap);
   const { push: pushToast } = useToast();
+  const [loading, setLoading] = useState(true);
 
   const [lines, setLines] = React.useState<any[]>([]);
 
   // Load data on component mount
   React.useEffect(() => {
     const loadData = async () => {
+      setLoading(true);
       try {
         const [loansData, borrowersData, linesData] = await Promise.all([
           dataService.getLoans(),
@@ -144,6 +146,9 @@ export const LoansManagement: React.FC = () => {
         setBorrowerMap(map);
       } catch (error) {
         console.error('Error loading loans:', error);
+        pushToast({ type: 'error', message: 'Failed to load loans data' });
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -310,6 +315,17 @@ export const LoansManagement: React.FC = () => {
     return (paid / total) * 100;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading loans...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -457,6 +473,29 @@ export const LoansManagement: React.FC = () => {
         transition={{ delay: 0.6 }}
         className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
+        {filteredLoans.length === 0 ? (
+          <div className="text-center py-16 px-4">
+            <CreditCard className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No loans found</h3>
+            <p className="text-gray-500 mb-6">
+              {loans.length === 0
+                ? "Get started by creating your first loan"
+                : "Try adjusting your search or filters"
+              }
+            </p>
+            {loans.length === 0 && (user?.role === 'agent' || user?.role === 'owner' || user?.role === 'co-owner') && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCreateLoan}
+                className="bg-gradient-to-r from-orange-500 to-teal-600 text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all inline-flex items-center space-x-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Create First Loan</span>
+              </motion.button>
+            )}
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -553,6 +592,7 @@ export const LoansManagement: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
       </motion.div>
 
       {/* Create Loan Modal */}
