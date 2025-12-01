@@ -78,31 +78,6 @@ export const ExpensesManagement: React.FC = () => {
     }
   };
 
-  const handleApprove = async (expenseId: string) => {
-    try {
-      await dataService.updateExpense(expenseId, {
-        status: 'approved',
-        approvedBy: user?.id,
-        approvedAt: new Date()
-      });
-      loadData();
-    } catch (error) {
-      console.error('Error approving expense:', error);
-    }
-  };
-
-  const handleReject = async (expenseId: string, reason: string) => {
-    try {
-      await dataService.updateExpense(expenseId, {
-        status: 'rejected',
-        approvedBy: user?.id,
-        rejectionReason: reason
-      });
-      loadData();
-    } catch (error) {
-      console.error('Error rejecting expense:', error);
-    }
-  };
 
   const handleMarkPaid = async (expenseId: string) => {
     try {
@@ -129,8 +104,8 @@ export const ExpensesManagement: React.FC = () => {
   });
 
   const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const pendingExpenses = expenses.filter(e => e.status === 'pending').length;
   const approvedExpenses = expenses.filter(e => e.status === 'approved').length;
+  const paidExpenses = expenses.filter(e => e.status === 'paid').length;
 
   const categoryTotals = categories.map(cat => ({
     category: cat.name,
@@ -178,14 +153,14 @@ export const ExpensesManagement: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl p-6 text-white shadow-lg"
+          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-amber-100 text-sm font-medium">Pending Approval</p>
-              <p className="text-3xl font-bold mt-2">{pendingExpenses}</p>
+              <p className="text-blue-100 text-sm font-medium">Paid</p>
+              <p className="text-3xl font-bold mt-2">{paidExpenses}</p>
             </div>
-            <Clock className="w-12 h-12 opacity-30" />
+            <DollarSign className="w-12 h-12 opacity-30" />
           </div>
         </motion.div>
 
@@ -373,27 +348,6 @@ export const ExpensesManagement: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center space-x-2">
-                        {user?.role !== 'agent' && expense.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => handleApprove(expense.id)}
-                              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                              title="Approve"
-                            >
-                              <CheckCircle className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                const reason = prompt('Enter rejection reason:');
-                                if (reason) handleReject(expense.id, reason);
-                              }}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Reject"
-                            >
-                              <XCircle className="w-5 h-5" />
-                            </button>
-                          </>
-                        )}
                         {user?.role !== 'agent' && expense.status === 'approved' && (
                           <button
                             onClick={() => handleMarkPaid(expense.id)}

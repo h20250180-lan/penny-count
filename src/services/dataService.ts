@@ -769,7 +769,9 @@ class DataService {
         receipt_url: expense.receiptUrl,
         payment_method: expense.paymentMethod,
         submitted_by: expense.submittedBy,
-        status: 'pending'
+        status: 'approved',
+        approved_by: expense.submittedBy,
+        approved_at: new Date().toISOString()
       })
       .select()
       .single();
