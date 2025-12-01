@@ -18,12 +18,12 @@ export const LoginForm: React.FC = () => {
   const { login, signup, loginError, signupError } = useAuth();
 
   useEffect(() => {
-    if (loginError && !isLoading && !loginEmail && !loginPassword) {
+    if (tab === 'login' && loginError && !isLoading) {
       setError(loginError);
-    } else {
-      setError('');
+    } else if (tab === 'signup' && signupError && !isLoading) {
+      setError(signupError);
     }
-  }, [loginError, isLoading, loginEmail, loginPassword]);
+  }, [tab, loginError, signupError, isLoading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +51,7 @@ export const LoginForm: React.FC = () => {
     setIsLoading(true);
     setError('');
     try {
-      const success = await signup(email, password, name, phone, role);
+      const success = await signup({ name, email, phone, password, role });
       if (!success) {
         setError(signupError || 'Signup failed');
       }
