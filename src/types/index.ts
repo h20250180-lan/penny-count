@@ -144,3 +144,153 @@ export interface SystemSettings {
   maxLoanAmount: number;
   minLoanAmount: number;
 }
+
+export interface ExpenseCategory {
+  id: string;
+  name: string;
+  description?: string;
+  budgetLimit?: number;
+  requiresApproval: boolean;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface Expense {
+  id: string;
+  lineId?: string;
+  categoryId: string;
+  category?: ExpenseCategory;
+  amount: number;
+  expenseDate: Date;
+  description: string;
+  receiptUrl?: string;
+  paymentMethod: 'cash' | 'digital' | 'bank_transfer' | 'upi';
+  submittedBy: string;
+  submittedByUser?: User;
+  approvedBy?: string;
+  approvedByUser?: User;
+  status: 'pending' | 'approved' | 'rejected' | 'paid';
+  rejectionReason?: string;
+  approvedAt?: Date;
+  paidAt?: Date;
+  createdAt: Date;
+}
+
+export interface DailyAccount {
+  id: string;
+  lineId?: string;
+  line?: Line;
+  accountDate: Date;
+  openingBalance: number;
+  totalCollections: number;
+  totalExpenses: number;
+  totalQrPayments: number;
+  closingBalance: number;
+  netBalance: number;
+  isLocked: boolean;
+  lockedBy?: string;
+  lockedAt?: Date;
+  notes?: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PaymentMethod {
+  id: string;
+  lineId?: string;
+  methodType: 'phonepe' | 'gpay' | 'paytm' | 'bank' | 'cash' | 'upi';
+  accountName: string;
+  accountNumber?: string;
+  qrCodeData?: string;
+  qrCodeUrl?: string;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface QRPayment {
+  id: string;
+  loanId: string;
+  loan?: Loan;
+  borrowerId: string;
+  borrower?: Borrower;
+  paymentMethodId: string;
+  paymentMethod?: PaymentMethod;
+  amount: number;
+  transactionId?: string;
+  transactionStatus: 'success' | 'pending' | 'failed';
+  paymentTimestamp: Date;
+  reconciled: boolean;
+  reconciledBy?: string;
+  reconciledAt?: Date;
+  notes?: string;
+  createdAt: Date;
+}
+
+export interface CoOwnerAgentSession {
+  id: string;
+  coOwnerId: string;
+  coOwner?: User;
+  lineId?: string;
+  line?: Line;
+  sessionStart: Date;
+  sessionEnd?: Date;
+  collectionsMade: number;
+  totalCollected: number;
+  commissionEarned: number;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface DailyReport {
+  id: string;
+  reportDate: Date;
+  lineId?: string;
+  line?: Line;
+  openingBalance: number;
+  closingBalance: number;
+  totalCollections: number;
+  totalExpenses: number;
+  netProfit: number;
+  reportData?: any;
+  generatedBy: string;
+  generatedAt: Date;
+  exported: boolean;
+  exportUrl?: string;
+}
+
+export interface DailyReportData {
+  date: Date;
+  openingBalance: number;
+  collections: {
+    agentName: string;
+    borrowerName: string;
+    loanId: string;
+    amount: number;
+    method: string;
+    time: Date;
+  }[];
+  qrPayments: {
+    borrowerName: string;
+    transactionId: string;
+    amount: number;
+    time: Date;
+  }[];
+  expenses: {
+    category: string;
+    description: string;
+    amount: number;
+    submittedBy: string;
+  }[];
+  totalCollections: number;
+  totalQrPayments: number;
+  totalExpenses: number;
+  netBalance: number;
+  closingBalance: number;
+  agentPerformance: {
+    agentName: string;
+    collections: number;
+    commission: number;
+    net: number;
+  }[];
+}

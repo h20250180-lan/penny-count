@@ -10,7 +10,9 @@ import {
   LogOut,
   Building2,
   Wallet,
-  MapPin
+  MapPin,
+  Receipt,
+  BarChart3
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -28,11 +30,13 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
   if (role === 'owner') {
     return [
       ...baseItems,
+      { id: 'owner-monitoring', label: 'Daily Monitoring', icon: BarChart3 },
       { id: 'lines', label: t('linesManagement'), icon: Building2 },
       { id: 'users', label: t('usersAgents'), icon: Users },
       { id: 'locations', label: 'Agent Locations', icon: MapPin },
       { id: 'borrowers', label: t('allBorrowers'), icon: UserCheck },
       { id: 'loans', label: t('loanOverview'), icon: CreditCard },
+      { id: 'expenses', label: 'Expenses', icon: Receipt },
       { id: 'analytics', label: t('analytics'), icon: TrendingUp },
       { id: 'settings', label: t('settings'), icon: Settings },
     ];
@@ -46,6 +50,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
       { id: 'locations', label: 'Agent Locations', icon: MapPin },
       { id: 'borrowers', label: t('borrowers'), icon: UserCheck },
       { id: 'loans', label: t('loans'), icon: CreditCard },
+      { id: 'expenses', label: 'Expenses', icon: Receipt },
       { id: 'commissions', label: t('commissions'), icon: Wallet },
       { id: 'analytics', label: t('reports'), icon: TrendingUp },
     ];
@@ -58,6 +63,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
     { id: 'loans', label: t('activeLoans'), icon: CreditCard },
     { id: 'collections', label: t('collections'), icon: Wallet },
     { id: 'payments', label: t('payments'), icon: TrendingUp },
+    { id: 'expenses', label: 'Expenses', icon: Receipt },
   ];
 };
 
@@ -76,16 +82,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
       className="w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 flex flex-col h-full shadow-lg"
     >
       {/* Header */}
-      <div className="p-6 border-b border-gray-200/50">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
-            <span className="text-white font-bold text-lg">
+      <div className="p-6 border-b border-gray-200/50 bg-gradient-to-br from-teal-50 to-copper-50">
+        <div className="flex flex-col items-center text-center mb-4">
+          <img
+            src="/ChatGPT Image Nov 28, 2025, 11_24_55 PM.png"
+            alt="Penny Count"
+            className="w-24 h-24 mb-3"
+          />
+          <h1 className="text-xl font-bold text-teal-900">Penny Count</h1>
+        </div>
+        <div className="flex items-center space-x-3 bg-white rounded-xl p-3 shadow-sm">
+          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow transform hover:scale-105 transition-transform">
+            <span className="text-white font-bold text-sm">
               {user.name.split(' ').map(n => n[0]).join('')}
             </span>
           </div>
-          <div>
-            <h2 className="font-bold text-gray-900">{user.name}</h2>
-            <p className="text-xs font-medium text-emerald-600 capitalize px-2 py-0.5 bg-emerald-50 rounded-full inline-block">{user.role}</p>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-gray-900 text-sm truncate">{user.name}</h2>
+            <p className="text-xs font-medium text-teal-600 capitalize">{user.role}</p>
           </div>
         </div>
       </div>

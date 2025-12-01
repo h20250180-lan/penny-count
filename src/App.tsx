@@ -21,6 +21,8 @@ import { Analytics } from './components/analytics/Analytics';
 import { Settings } from './components/settings/Settings';
 import { AgentLocationMap } from './components/location/AgentLocationMap';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
+import { ExpensesManagement } from './components/expenses/ExpensesManagement';
+import { OwnerDashboard } from './components/owner/OwnerDashboard';
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -66,6 +68,10 @@ const AppContent: React.FC = () => {
         return user.role === 'co-owner' ? t('reports') : t('analytics');
       case 'locations':
         return 'Agent Locations';
+      case 'expenses':
+        return 'Expenses Management';
+      case 'owner-monitoring':
+        return 'Daily Monitoring';
       case 'settings':
         return t('settings');
       default:
@@ -97,6 +103,10 @@ const AppContent: React.FC = () => {
         return <Analytics />;
       case 'locations':
         return <AgentLocationMap />;
+      case 'expenses':
+        return <ExpensesManagement />;
+      case 'owner-monitoring':
+        return <OwnerDashboard />;
       case 'settings':
         return <Settings />;
       default:

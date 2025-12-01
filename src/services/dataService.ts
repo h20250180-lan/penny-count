@@ -659,6 +659,295 @@ class DataService {
       recentActivity: []
     };
   }
+
+  async getExpenseCategories(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('expense_categories')
+      .select('*')
+      .order('name');
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getExpenses(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('expenses')
+      .select(`
+        *,
+        category:expense_categories(*),
+        submittedByUser:users!expenses_submitted_by_fkey(*),
+        approvedByUser:users!expenses_approved_by_fkey(*)
+      `)
+      .order('expense_date', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getExpensesByDate(date: string, lineId?: string): Promise<any[]> {
+    let query = supabase
+      .from('expenses')
+      .select(`
+        *,
+        category:expense_categories(*),
+        submittedByUser:users!expenses_submitted_by_fkey(*)
+      `)
+      .eq('expense_date', date);
+
+    if (lineId) {
+      query = query.eq('line_id', lineId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  }
+
+  async createExpense(expense: any): Promise<any> {
+    const { data, error } = await supabase
+      .from('expenses')
+      .insert({
+        line_id: expense.lineId || null,
+        category_id: expense.categoryId,
+        amount: expense.amount,
+        expense_date: expense.expenseDate,
+        description: expense.description,
+        receipt_url: expense.receiptUrl,
+        payment_method: expense.paymentMethod,
+        submitted_by: expense.submittedBy,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateExpense(id: string, updates: any): Promise<any> {
+    const { data, error } = await supabase
+      .from('expenses')
+      .update({
+        status: updates.status,
+        approved_by: updates.approvedBy,
+        rejection_reason: updates.rejectionReason,
+        approved_at: updates.approvedAt,
+        paid_at: updates.paidAt
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getDailyAccount(date: string, lineId?: string): Promise<any> {
+    let query = supabase
+      .from('daily_accounts')
+      .select('*')
+      .eq('account_date', date);
+
+    if (lineId) {
+      query = query.eq('line_id', lineId);
+    } else {
+      query = query.is('line_id', null);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      const newAccount = await this.createDailyAccount(date, lineId);
+      return newAccount;
+    }
+
+    return data;
+  }
+
+  async createDailyAccount(date: string, lineId?: string): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('daily_accounts')
+      .insert({
+        account_date: date,
+        line_id: lineId || null,
+        opening_balance: 0,
+        created_by: user?.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateDailyAccount(id: string, updates: any): Promise<any> {
+    const { data, error } = await supabase
+      .from('daily_accounts')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getPaymentMethods(lineId?: string): Promise<any[]> {
+    let query = supabase
+      .from('payment_methods')
+      .select('*')
+      .eq('is_active', true);
+
+    if (lineId) {
+      query = query.eq('line_id', lineId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getQRPaymentsByLoan(loanId: string): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('qr_payments')
+      .select('*')
+      .eq('loan_id', loanId)
+      .order('payment_timestamp', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  async getQRPaymentsByDate(date: string, lineId?: string): Promise<any[]> {
+    let query = supabase
+      .from('qr_payments')
+      .select(`
+        *,
+        loan:loans(*),
+        borrower:borrowers(*)
+      `)
+      .gte('payment_timestamp', `${date}T00:00:00`)
+      .lte('payment_timestamp', `${date}T23:59:59`);
+
+    if (lineId) {
+      query = query.eq('loan.line_id', lineId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  }
+
+  async reconcileQRPayment(paymentId: string): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('qr_payments')
+      .update({
+        reconciled: true,
+        reconciled_by: user?.id,
+        reconciled_at: new Date().toISOString()
+      })
+      .eq('id', paymentId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getPaymentsByDate(date: string, lineId?: string): Promise<any[]> {
+    let query = supabase
+      .from('payments')
+      .select(`
+        *,
+        loan:loans(*),
+        borrower:borrowers(*),
+        agent:users!payments_collected_by_fkey(*)
+      `)
+      .gte('created_at', `${date}T00:00:00`)
+      .lte('created_at', `${date}T23:59:59`);
+
+    if (lineId) {
+      query = query.eq('loan.line_id', lineId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(p => ({
+      ...p,
+      agentName: p.agent?.name,
+      borrowerName: p.borrower?.name
+    }));
+  }
+
+  async getActiveCoOwnerSession(coOwnerId: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('co_owner_agent_sessions')
+      .select('*')
+      .eq('co_owner_id', coOwnerId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async startCoOwnerAgentSession(coOwnerId: string, lineId: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('co_owner_agent_sessions')
+      .insert({
+        co_owner_id: coOwnerId,
+        line_id: lineId,
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async endCoOwnerAgentSession(sessionId: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('co_owner_agent_sessions')
+      .update({
+        is_active: false,
+        session_end: new Date().toISOString()
+      })
+      .eq('id', sessionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async updateCoOwnerSessionStats(sessionId: string, updates: any): Promise<any> {
+    const { data, error } = await supabase
+      .from('co_owner_agent_sessions')
+      .update({
+        collections_made: updates.collectionsMade,
+        total_collected: updates.totalCollected,
+        commission_earned: updates.commissionEarned
+      })
+      .eq('id', sessionId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async exportDailyAccountToExcel(date: string, lineId?: string): Promise<string> {
+    console.log('Exporting daily account to Excel for date:', date, 'line:', lineId);
+    return '';
+  }
 }
 
 export const dataService = new DataService();
