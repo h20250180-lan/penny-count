@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Briefcase, MapPin, DollarSign, Clock, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 import { CoOwnerAgentSession, Line } from '../../types';
 
 export const AgentModeToggle: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [isAgentMode, setIsAgentMode] = useState(false);
   const [currentSession, setCurrentSession] = useState<CoOwnerAgentSession | null>(null);
   const [lines, setLines] = useState<Line[]>([]);
@@ -100,12 +102,12 @@ export const AgentModeToggle: React.FC = () => {
         {isAgentMode ? (
           <>
             <MapPin className="w-5 h-5 animate-pulse" />
-            <span>Agent Mode Active</span>
+            <span>{t('agentModeActive')}</span>
           </>
         ) : (
           <>
             <Briefcase className="w-5 h-5" />
-            <span>Switch to Agent Mode</span>
+            <span>{t('switchToAgentMode')}</span>
           </>
         )}
       </motion.button>
@@ -178,7 +180,7 @@ export const AgentModeToggle: React.FC = () => {
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
                   required
                 >
-                  <option value="">Choose a line...</option>
+                  <option value="">{t('chooseALine')}</option>
                   {lines.map(line => (
                     <option key={line.id} value={line.id}>{line.name}</option>
                   ))}
@@ -193,19 +195,19 @@ export const AgentModeToggle: React.FC = () => {
                 <ul className="space-y-2 text-sm text-teal-800">
                   <li className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>Real-time location tracking</span>
+                    <span>{t('realtimeLocationTracking')}</span>
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>Collection interface access</span>
+                    <span>{t('collectionInterfaceAccess')}</span>
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>Commission eligibility</span>
+                    <span>{t('commissionEligibility')}</span>
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>Performance tracking</span>
+                    <span>{t('performanceTracking')}</span>
                   </li>
                 </ul>
               </div>

@@ -15,10 +15,12 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 
 export const Analytics: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [timeFilter, setTimeFilter] = useState('6months');
   const [selectedMetric, setSelectedMetric] = useState('disbursed');
   const [analytics, setAnalytics] = useState<any>(null);
@@ -46,11 +48,11 @@ export const Analytics: React.FC = () => {
   const getTitle = () => {
     switch (user?.role) {
       case 'owner':
-        return 'Analytics';
+        return t('analytics');
       case 'co-owner':
-        return 'Reports';
+        return t('reports');
       default:
-        return 'Analytics';
+        return t('analytics');
     }
   };
 
@@ -87,10 +89,10 @@ export const Analytics: React.FC = () => {
             onChange={(e) => setTimeFilter(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
           >
-            <option value="1month">Last Month</option>
-            <option value="3months">Last 3 Months</option>
-            <option value="6months">Last 6 Months</option>
-            <option value="1year">Last Year</option>
+            <option value="1month">{t('lastMonth')}</option>
+            <option value="3months">{t('last3Months')}</option>
+            <option value="6months">{t('last6Months')}</option>
+            <option value="1year">{t('lastYear')}</option>
           </select>
           <motion.button
             whileHover={{ scale: 1.02 }}
@@ -98,7 +100,7 @@ export const Analytics: React.FC = () => {
             className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
           >
             <Download className="w-5 h-5" />
-            <span>Export Report</span>
+            <span>{t('exportReport')}</span>
           </motion.button>
         </div>
       </motion.div>

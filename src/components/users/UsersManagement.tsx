@@ -13,9 +13,11 @@ import {
   Filter
 } from 'lucide-react';
 import { User } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 
 export const UsersManagement: React.FC = () => {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]); // Start with empty array
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -204,7 +206,7 @@ export const UsersManagement: React.FC = () => {
           className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
         >
           <Plus className="w-5 h-5" />
-          <span>Add User</span>
+          <span>{t('addUser')}</span>
         </motion.button>
       </motion.div>
 
@@ -221,7 +223,7 @@ export const UsersManagement: React.FC = () => {
               <Shield className="w-6 h-6 text-purple-600" />
             </div>
           </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Owners</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">{t('owners')}</h3>
           <p className="text-2xl font-bold text-gray-800">
             {users.filter(u => u.role === 'owner').length}
           </p>
@@ -238,7 +240,7 @@ export const UsersManagement: React.FC = () => {
               <UserCheck className="w-6 h-6 text-blue-600" />
             </div>
           </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Co-Owners</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">{t('coOwners')}</h3>
           <p className="text-2xl font-bold text-gray-800">
             {users.filter(u => u.role === 'co-owner').length}
           </p>
@@ -255,7 +257,7 @@ export const UsersManagement: React.FC = () => {
               <UserCheck className="w-6 h-6 text-green-600" />
             </div>
           </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Agents</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-1">{t('agents')}</h3>
           <p className="text-2xl font-bold text-gray-800">
             {users.filter(u => u.role === 'agent').length}
           </p>
@@ -306,10 +308,10 @@ export const UsersManagement: React.FC = () => {
               onChange={(e) => setRoleFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             >
-              <option value="all">All Roles</option>
-              <option value="owner">Owners</option>
-              <option value="co-owner">Co-Owners</option>
-              <option value="agent">Agents</option>
+              <option value="all">{t('allRoles')}</option>
+              <option value="owner">{t('owners')}</option>
+              <option value="co-owner">{t('coOwners')}</option>
+              <option value="agent">{t('agents')}</option>
             </select>
           </div>
         </div>
@@ -486,9 +488,9 @@ export const UsersManagement: React.FC = () => {
                   Role
                 </label>
                 <select name="role" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="">Select Role</option>
-                  <option value="co-owner">Co-Owner</option>
-                  <option value="agent">Agent</option>
+                  <option value="">{t('selectRole')}</option>
+                  <option value="co-owner">{t('coOwner')}</option>
+                  <option value="agent">{t('agent')}</option>
                 </select>
               </div>
               <div className="flex space-x-3 pt-4">
@@ -553,9 +555,9 @@ export const UsersManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
                 <select defaultValue={selectedUser.role} name="role" className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                  <option value="owner">Owner</option>
-                  <option value="co-owner">Co-Owner</option>
-                  <option value="agent">Agent</option>
+                  <option value="owner">{t('owner')}</option>
+                  <option value="co-owner">{t('coOwner')}</option>
+                  <option value="agent">{t('agent')}</option>
                 </select>
               </div>
               <div className="flex space-x-3 pt-4">

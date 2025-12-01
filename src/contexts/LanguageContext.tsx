@@ -256,6 +256,53 @@ const translations: Record<Language, Record<string, string>> = {
     digital: 'Digital',
     bankTransfer: 'Bank Transfer',
     rejected: 'Rejected',
+
+    // Time Periods
+    last3Months: 'Last 3 Months',
+    last6Months: 'Last 6 Months',
+    allPeriods: 'All Periods',
+
+    // Metrics
+    disbursed: 'Disbursed',
+    collected: 'Collected',
+    loanCount: 'Loan Count',
+    exportReport: 'Export Report',
+
+    // Payment Methods
+    allMethods: 'All Methods',
+    phonepe: 'PhonePe',
+    qrCode: 'QR Code',
+
+    // Actions & Buttons
+    addUser: 'Add User',
+    switchToAgentMode: 'Switch to Agent Mode',
+    agentModeActive: 'Agent Mode Active',
+    trackingOn: 'Tracking ON',
+    trackingOff: 'Tracking OFF',
+
+    // Roles & Status
+    allRoles: 'All Roles',
+    owners: 'Owners',
+    coOwners: 'Co-Owners',
+    agents: 'Agents',
+    allStatus: 'All Status',
+
+    // Selection Prompts
+    chooseBorrower: 'Choose borrower',
+    selectActiveLoan: 'Select active loan',
+    chooseALine: 'Choose a line...',
+    selectRole: 'Select Role',
+
+    // Features
+    realtimeLocationTracking: 'Real-time location tracking',
+    collectionInterfaceAccess: 'Collection interface access',
+    commissionEligibility: 'Commission eligibility',
+    performanceTracking: 'Performance tracking',
+
+    // Messages
+    noLoansMessage: 'Get started by creating your first loan',
+    tryAdjustingFilters: 'Try adjusting your search or filters',
+    remaining: 'remaining',
   },
   te: {
     // Navigation
@@ -494,6 +541,53 @@ const translations: Record<Language, Record<string, string>> = {
     digital: 'డిజిటల్',
     bankTransfer: 'బ్యాంక్ బదిలీ',
     rejected: 'తిరస్కరించబడింది',
+
+    // Time Periods
+    last3Months: 'గత 3 నెలలు',
+    last6Months: 'గత 6 నెలలు',
+    allPeriods: 'అన్ని కాలాలు',
+
+    // Metrics
+    disbursed: 'పంపిణీ చేయబడింది',
+    collected: 'వసూలు చేయబడింది',
+    loanCount: 'రుణాల సంఖ్య',
+    exportReport: 'నివేదిక ఎగుమతి',
+
+    // Payment Methods
+    allMethods: 'అన్ని పద్ధతులు',
+    phonepe: 'ఫోన్‌పే',
+    qrCode: 'క్యూఆర్ కోడ్',
+
+    // Actions & Buttons
+    addUser: 'వినియోగదారుని జోడించు',
+    switchToAgentMode: 'ఏజెంట్ మోడ్‌కు మారు',
+    agentModeActive: 'ఏజెంట్ మోడ్ యాక్టివ్',
+    trackingOn: 'ట్రాకింగ్ ఆన్',
+    trackingOff: 'ట్రాకింగ్ ఆఫ్',
+
+    // Roles & Status
+    allRoles: 'అన్ని పాత్రలు',
+    owners: 'యజమానులు',
+    coOwners: 'సహ-యజమానులు',
+    agents: 'ఏజెంట్లు',
+    allStatus: 'అన్ని స్థితులు',
+
+    // Selection Prompts
+    chooseBorrower: 'రుణగ్రహీతను ఎంచుకోండి',
+    selectActiveLoan: 'క్రియాశీల రుణాన్ని ఎంచుకోండి',
+    chooseALine: 'లైన్ ఎంచుకోండి...',
+    selectRole: 'పాత్ర ఎంచుకోండి',
+
+    // Features
+    realtimeLocationTracking: 'రియల్-టైమ్ స్థాన ట్రాకింగ్',
+    collectionInterfaceAccess: 'వసూలు ఇంటర్‌ఫేస్ యాక్సెస్',
+    commissionEligibility: 'కమీషన్ అర్హత',
+    performanceTracking: 'పనితీరు ట్రాకింగ్',
+
+    // Messages
+    noLoansMessage: 'మీ మొదటి రుణాన్ని సృష్టించడం ద్వారా ప్రారంభించండి',
+    tryAdjustingFilters: 'మీ శోధన లేదా ఫిల్టర్‌లను సర్దుబాటు చేయండి',
+    remaining: 'మిగిలినది',
   }
 };
 

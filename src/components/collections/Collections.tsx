@@ -16,9 +16,11 @@ import {
   MapPin
 } from 'lucide-react';
 import { Payment } from '../../types';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 
 export const Collections: React.FC = () => {
+  const { t } = useLanguage();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState<string>('all');
@@ -178,7 +180,7 @@ export const Collections: React.FC = () => {
           className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
         >
           <Plus className="w-5 h-5" />
-          <span>Collect Payment</span>
+          <span>{t('collectPayment')}</span>
         </motion.button>
       </motion.div>
 
@@ -329,11 +331,11 @@ export const Collections: React.FC = () => {
               onChange={(e) => setMethodFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             >
-              <option value="all">All Methods</option>
-              <option value="cash">Cash</option>
-              <option value="upi">UPI</option>
-              <option value="phonepe">PhonePe</option>
-              <option value="qr">QR Code</option>
+              <option value="all">{t('allMethods')}</option>
+              <option value="cash">{t('cash')}</option>
+              <option value="upi">{t('upi')}</option>
+              <option value="phonepe">{t('phonepe')}</option>
+              <option value="qr">{t('qrCode')}</option>
             </select>
           </div>
         </div>
@@ -424,7 +426,7 @@ export const Collections: React.FC = () => {
                   Select Borrower
                 </label>
                 <select name="borrowerId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="">Choose borrower</option>
+                  <option value="">{t('chooseBorrower')}</option>
                   {Object.entries(borrowerNames).map(([id, name]) => (
                     <option key={id} value={id}>{name}</option>
                   ))}
@@ -435,7 +437,7 @@ export const Collections: React.FC = () => {
                   Loan ID
                 </label>
                 <select name="loanId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="">Select active loan</option>
+                  <option value="">{t('selectActiveLoan')}</option>
                   <option value="L001">L001 - ₹5,750 remaining</option>
                   <option value="L004">L004 - ₹4,462 remaining</option>
                 </select>
@@ -457,10 +459,10 @@ export const Collections: React.FC = () => {
                   Payment Method
                 </label>
                 <select name="method" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="cash">Cash</option>
-                  <option value="upi">UPI</option>
-                  <option value="phonepe">PhonePe</option>
-                  <option value="qr">QR Code</option>
+                  <option value="cash">{t('cash')}</option>
+                  <option value="upi">{t('upi')}</option>
+                  <option value="phonepe">{t('phonepe')}</option>
+                  <option value="qr">{t('qrCode')}</option>
                 </select>
               </div>
               <div>
