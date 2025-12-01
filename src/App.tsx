@@ -115,12 +115,17 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 flex">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50/20 via-white to-teal-50/30 flex relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-200/20 to-transparent rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-teal-200/20 to-transparent rounded-full blur-3xl" />
       {/* Sidebar */}
-      <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      <div className="relative z-10">
+        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="relative z-10 flex-1 flex flex-col min-w-0">
         <TopBar title={getSectionTitle()} />
 
         {/* Content Area */}

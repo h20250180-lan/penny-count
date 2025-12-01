@@ -33,7 +33,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
     >
       {/* Left section */}
       <div className="flex items-center space-x-2 lg:space-x-4 flex-1 min-w-0">
-        <h1 className="text-lg lg:text-2xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent truncate">{title}</h1>
+        <h1 className="text-lg lg:text-2xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-teal-700 bg-clip-text text-transparent truncate">{title}</h1>
 
         {/* Line Selector for Agents */}
         {isAgent && selectedLine && (
@@ -136,7 +136,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             <p className="text-sm font-medium text-gray-800 truncate max-w-[120px]">{user?.name}</p>
             <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
           </div>
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-sm">
+          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 via-orange-600 to-teal-600 rounded-full flex items-center justify-center shadow-md ring-2 ring-orange-100">
             <span className="text-white font-bold text-xs">
               {user?.name.split(' ').map(n => n[0]).join('')}
             </span>

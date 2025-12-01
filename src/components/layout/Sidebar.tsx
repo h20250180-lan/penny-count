@@ -82,24 +82,37 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
       className="w-56 lg:w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 flex flex-col h-full shadow-lg"
     >
       {/* Header */}
-      <div className="p-4 lg:p-6 border-b border-gray-200/50 bg-gradient-to-br from-teal-50 to-copper-50">
-        <div className="flex flex-col items-center text-center mb-3">
-          <img
-            src="/ChatGPT Image Nov 28, 2025, 11_24_55 PM.png"
-            alt="Penny Count"
-            className="w-16 lg:w-20 h-16 lg:h-20 mb-2"
-          />
-          <h1 className="text-base lg:text-lg font-bold text-teal-900">Penny Count</h1>
+      <div className="relative p-4 lg:p-6 border-b border-gray-200/50 bg-gradient-to-br from-white via-orange-50/30 to-teal-50/40 overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-orange-400/10 to-transparent rounded-full blur-2xl" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-teal-400/10 to-transparent rounded-full blur-2xl" />
+
+        <div className="relative flex flex-col items-center text-center mb-4">
+          <div className="relative mb-3">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-teal-600 rounded-2xl blur-lg opacity-20 animate-pulse" />
+            <img
+              src="/ChatGPT Image Nov 28, 2025, 11_24_55 PM-Photoroom.png"
+              alt="Penny Count"
+              className="relative w-20 lg:w-24 h-20 lg:h-24 drop-shadow-lg"
+            />
+          </div>
+          <h1 className="text-lg lg:text-xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-teal-700 bg-clip-text text-transparent">
+            Penny Count
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5">Financial Management</p>
         </div>
-        <div className="flex items-center space-x-2 bg-white rounded-xl p-2 shadow-sm">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow transform hover:scale-105 transition-transform">
+
+        <div className="relative flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-xl p-2.5 shadow-lg border border-gray-100">
+          <div className="w-9 h-9 bg-gradient-to-br from-orange-500 via-orange-600 to-teal-600 rounded-xl flex items-center justify-center shadow-md transform hover:scale-110 transition-transform">
             <span className="text-white font-bold text-xs">
               {user.name.split(' ').map(n => n[0]).join('')}
             </span>
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-gray-900 text-xs lg:text-sm truncate">{user.name}</h2>
-            <p className="text-xs font-medium text-teal-600 capitalize">{user.role}</p>
+            <p className="text-xs font-medium bg-gradient-to-r from-orange-600 to-teal-600 bg-clip-text text-transparent capitalize">
+              {user.role}
+            </p>
           </div>
         </div>
       </div>
@@ -112,8 +125,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
             onClick={() => onSectionChange(item.id)}
             className={`w-full flex items-center space-x-2 lg:space-x-3 p-2.5 lg:p-3 rounded-xl transition-all duration-200 ${
               activeSection === item.id
-                ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-200'
-                : 'text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-md'
+                ? 'bg-gradient-to-r from-orange-500 via-orange-600 to-teal-600 text-white shadow-lg shadow-orange-200'
+                : 'text-gray-600 hover:bg-gradient-to-r hover:from-orange-50 hover:to-teal-50 hover:text-gray-900 hover:shadow-md'
             }`}
             whileHover={{ x: 4 }}
             whileTap={{ scale: 0.98 }}
@@ -123,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
             {activeSection === item.id && (
               <motion.div
                 layoutId="activeIndicator"
-                className="ml-auto w-2 h-2 bg-white rounded-full flex-shrink-0"
+                className="ml-auto w-2 h-2 bg-white rounded-full flex-shrink-0 shadow-sm"
               />
             )}
           </motion.button>
