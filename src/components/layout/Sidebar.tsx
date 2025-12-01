@@ -79,51 +79,51 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
     <motion.div
       initial={{ x: -280 }}
       animate={{ x: 0 }}
-      className="w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 flex flex-col h-full shadow-lg"
+      className="w-56 lg:w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 flex flex-col h-full shadow-lg"
     >
       {/* Header */}
-      <div className="p-6 border-b border-gray-200/50 bg-gradient-to-br from-teal-50 to-copper-50">
-        <div className="flex flex-col items-center text-center mb-4">
+      <div className="p-4 lg:p-6 border-b border-gray-200/50 bg-gradient-to-br from-teal-50 to-copper-50">
+        <div className="flex flex-col items-center text-center mb-3">
           <img
             src="/ChatGPT Image Nov 28, 2025, 11_24_55 PM.png"
             alt="Penny Count"
-            className="w-24 h-24 mb-3"
+            className="w-16 lg:w-20 h-16 lg:h-20 mb-2"
           />
-          <h1 className="text-xl font-bold text-teal-900">Penny Count</h1>
+          <h1 className="text-base lg:text-lg font-bold text-teal-900">Penny Count</h1>
         </div>
-        <div className="flex items-center space-x-3 bg-white rounded-xl p-3 shadow-sm">
-          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow transform hover:scale-105 transition-transform">
-            <span className="text-white font-bold text-sm">
+        <div className="flex items-center space-x-2 bg-white rounded-xl p-2 shadow-sm">
+          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center shadow transform hover:scale-105 transition-transform">
+            <span className="text-white font-bold text-xs">
               {user.name.split(' ').map(n => n[0]).join('')}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-semibold text-gray-900 text-sm truncate">{user.name}</h2>
+            <h2 className="font-semibold text-gray-900 text-xs lg:text-sm truncate">{user.name}</h2>
             <p className="text-xs font-medium text-teal-600 capitalize">{user.role}</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 p-3 lg:p-4 space-y-1 overflow-y-auto">
         {navigationItems.map((item) => (
           <motion.button
             key={item.id}
             onClick={() => onSectionChange(item.id)}
-            className={`w-full flex items-center space-x-3 p-3.5 rounded-xl transition-all duration-200 ${
+            className={`w-full flex items-center space-x-2 lg:space-x-3 p-2.5 lg:p-3 rounded-xl transition-all duration-200 ${
               activeSection === item.id
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200 scale-105'
+                ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-200'
                 : 'text-gray-600 hover:bg-white hover:text-gray-900 hover:shadow-md'
             }`}
             whileHover={{ x: 4 }}
             whileTap={{ scale: 0.98 }}
           >
-            <item.icon className={`w-5 h-5 ${activeSection === item.id ? 'text-white' : ''}`} />
-            <span className="font-semibold text-sm">{item.label}</span>
+            <item.icon className={`w-4 lg:w-5 h-4 lg:h-5 flex-shrink-0 ${activeSection === item.id ? 'text-white' : ''}`} />
+            <span className="font-semibold text-xs lg:text-sm truncate">{item.label}</span>
             {activeSection === item.id && (
               <motion.div
                 layoutId="activeIndicator"
-                className="ml-auto w-2 h-2 bg-white rounded-full"
+                className="ml-auto w-2 h-2 bg-white rounded-full flex-shrink-0"
               />
             )}
           </motion.button>

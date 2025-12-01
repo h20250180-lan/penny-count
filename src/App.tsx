@@ -125,7 +125,7 @@ const AppContent: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto">
-          <div className="p-6 lg:p-8">
+          <div className="p-3 sm:p-4 lg:p-6 xl:p-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}

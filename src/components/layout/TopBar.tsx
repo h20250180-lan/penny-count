@@ -29,11 +29,11 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
     <motion.div
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bg-white/90 backdrop-blur-xl border-b border-gray-200/60 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-40"
+      className="bg-white/90 backdrop-blur-xl border-b border-gray-200/60 px-3 lg:px-6 py-3 flex items-center justify-between shadow-sm sticky top-0 z-40"
     >
       {/* Left section */}
-      <div className="flex items-center space-x-4">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">{title}</h1>
+      <div className="flex items-center space-x-2 lg:space-x-4 flex-1 min-w-0">
+        <h1 className="text-lg lg:text-2xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent truncate">{title}</h1>
 
         {/* Line Selector for Agents */}
         {isAgent && selectedLine && (
@@ -82,7 +82,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
         )}
 
         {/* Online/Offline indicator */}
-        <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm ${
+        <div className={`flex items-center space-x-1 lg:space-x-2 px-2 lg:px-3 py-1.5 rounded-full text-xs font-medium shadow-sm ${
           isOnline
             ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200'
             : 'bg-gradient-to-r from-red-50 to-orange-50 text-red-700 border border-red-200'
@@ -92,19 +92,19 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
           ) : (
             <WifiOff className="w-3.5 h-3.5" />
           )}
-          <span>{isOnline ? t('online') : t('offline')}</span>
+          <span className="hidden sm:inline">{isOnline ? t('online') : t('offline')}</span>
         </div>
       </div>
 
       {/* Right section */}
-      <div className="flex items-center space-x-4">
-        {/* Search */}
-        <div className="relative">
+      <div className="flex items-center space-x-2 lg:space-x-3">
+        {/* Search - hidden on smaller screens */}
+        <div className="relative hidden xl:block">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             placeholder={t('searchBorrowersLoans')}
-            className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none w-64 transition-all duration-200"
+            className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white outline-none w-48 xl:w-64 transition-all duration-200"
           />
         </div>
 
@@ -120,19 +120,23 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
         {/* Notifications */}
         <NotificationCenter />
 
-        {/* Language Toggle */}
-        <LanguageToggle />
+        {/* Language Toggle - hidden on smaller screens */}
+        <div className="hidden lg:block">
+          <LanguageToggle />
+        </div>
 
-        {/* Theme Toggle */}
-        <ThemeToggle />
+        {/* Theme Toggle - hidden on smaller screens */}
+        <div className="hidden lg:block">
+          <ThemeToggle />
+        </div>
 
         {/* User info */}
-        <div className="flex items-center space-x-3">
-          <div className="text-right">
-            <p className="text-sm font-medium text-gray-800">{user?.name}</p>
+        <div className="flex items-center space-x-2">
+          <div className="text-right hidden md:block">
+            <p className="text-sm font-medium text-gray-800 truncate max-w-[120px]">{user?.name}</p>
             <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
           </div>
-          <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-full flex items-center justify-center shadow-sm">
             <span className="text-white font-bold text-xs">
               {user?.name.split(' ').map(n => n[0]).join('')}
             </span>
