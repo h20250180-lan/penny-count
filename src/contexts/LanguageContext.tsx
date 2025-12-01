@@ -239,6 +239,23 @@ const translations: Record<Language, Record<string, string>> = {
     state: 'State',
     pincode: 'Pincode',
     country: 'Country',
+
+    // Expenses
+    expenses: 'Expenses',
+    expenseManagement: 'Expense Management',
+    recordExpense: 'Record Expense',
+    totalExpenses: 'Total Expenses',
+    approvedExpenses: 'Approved',
+    paidExpenses: 'Paid',
+    category: 'Category',
+    expenseDate: 'Expense Date',
+    receiptUrl: 'Receipt URL',
+    viewReceipt: 'View Receipt',
+    markAsPaid: 'Mark as Paid',
+    categoryBreakdown: 'Category Breakdown',
+    digital: 'Digital',
+    bankTransfer: 'Bank Transfer',
+    rejected: 'Rejected',
   },
   te: {
     // Navigation
@@ -460,6 +477,23 @@ const translations: Record<Language, Record<string, string>> = {
     state: 'రాష్ట్రం',
     pincode: 'పిన్‌కోడ్',
     country: 'దేశం',
+
+    // Expenses
+    expenses: 'ఖర్చులు',
+    expenseManagement: 'ఖర్చుల నిర్వహణ',
+    recordExpense: 'ఖర్చు రికార్డ్',
+    totalExpenses: 'మొత్తం ఖర్చులు',
+    approvedExpenses: 'ఆమోదించబడింది',
+    paidExpenses: 'చెల్లించబడింది',
+    category: 'వర్గం',
+    expenseDate: 'ఖర్చు తేదీ',
+    receiptUrl: 'రసీదు URL',
+    viewReceipt: 'రసీదు చూడండి',
+    markAsPaid: 'చెల్లించినట్లు గుర్తించు',
+    categoryBreakdown: 'వర్గ విభజన',
+    digital: 'డిజిటల్',
+    bankTransfer: 'బ్యాంక్ బదిలీ',
+    rejected: 'తిరస్కరించబడింది',
   }
 };
 

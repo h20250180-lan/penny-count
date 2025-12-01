@@ -7,10 +7,12 @@ import {
 } from 'lucide-react';
 import { Expense, ExpenseCategory, Line } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 
 export const ExpensesManagement: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
@@ -119,8 +121,8 @@ export const ExpensesManagement: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-teal-900">Expenses Management</h1>
-          <p className="text-gray-600 mt-1">Track and manage all business expenses</p>
+          <h1 className="text-3xl font-bold text-teal-900">{t('expenseManagement')}</h1>
+          <p className="text-gray-600 mt-1">{t('expenseManagement')}</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -129,7 +131,7 @@ export const ExpensesManagement: React.FC = () => {
           className="flex items-center space-x-2 bg-gradient-to-r from-copper-500 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
         >
           <Plus className="w-5 h-5" />
-          <span>Add Expense</span>
+          <span>{t('recordExpense')}</span>
         </motion.button>
       </div>
 
@@ -142,7 +144,7 @@ export const ExpensesManagement: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-teal-100 text-sm font-medium">Total Expenses</p>
+              <p className="text-teal-100 text-sm font-medium">{t('totalExpenses')}</p>
               <p className="text-3xl font-bold mt-2">₹{totalExpenses.toLocaleString()}</p>
             </div>
             <DollarSign className="w-12 h-12 opacity-30" />
@@ -157,7 +159,7 @@ export const ExpensesManagement: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium">Paid</p>
+              <p className="text-blue-100 text-sm font-medium">{t('paidExpenses')}</p>
               <p className="text-3xl font-bold mt-2">{paidExpenses}</p>
             </div>
             <DollarSign className="w-12 h-12 opacity-30" />
@@ -172,7 +174,7 @@ export const ExpensesManagement: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-sm font-medium">Approved</p>
+              <p className="text-green-100 text-sm font-medium">{t('approvedExpenses')}</p>
               <p className="text-3xl font-bold mt-2">{approvedExpenses}</p>
             </div>
             <CheckCircle className="w-12 h-12 opacity-30" />
@@ -187,7 +189,7 @@ export const ExpensesManagement: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium">Categories</p>
+              <p className="text-blue-100 text-sm font-medium">{t('category')}</p>
               <p className="text-3xl font-bold mt-2">{categories.length}</p>
             </div>
             <PieChart className="w-12 h-12 opacity-30" />
@@ -203,7 +205,7 @@ export const ExpensesManagement: React.FC = () => {
       >
         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
           <TrendingUp className="w-6 h-6 mr-2 text-copper-500" />
-          Top Expense Categories
+          {t('categoryBreakdown')}
         </h2>
         <div className="space-y-3">
           {categoryTotals.slice(0, 5).map((item, index) => (
@@ -232,7 +234,7 @@ export const ExpensesManagement: React.FC = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search expenses..."
+              placeholder={t('searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
@@ -244,11 +246,11 @@ export const ExpensesManagement: React.FC = () => {
             onChange={(e) => setFilterStatus(e.target.value as any)}
             className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
           >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="paid">Paid</option>
+            <option value="all">{t('all')} {t('status')}</option>
+            <option value="pending">{t('pending')}</option>
+            <option value="approved">{t('approvedExpenses')}</option>
+            <option value="rejected">{t('rejected')}</option>
+            <option value="paid">{t('paid')}</option>
           </select>
 
           <select
@@ -256,7 +258,7 @@ export const ExpensesManagement: React.FC = () => {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
           >
-            <option value="all">All Categories</option>
+            <option value="all">{t('all')} {t('category')}</option>
             {categories.map(cat => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
@@ -286,13 +288,13 @@ export const ExpensesManagement: React.FC = () => {
           <table className="w-full">
             <thead className="bg-gradient-to-r from-teal-50 to-copper-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Category</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Description</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Amount</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Method</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('date')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('category')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('description')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('amount')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('paymentMethod')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('status')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -410,13 +412,13 @@ export const ExpensesManagement: React.FC = () => {
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Line</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('lineName')}</label>
                     <select
                       value={formData.lineId}
                       onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
                     >
-                      <option value="">Select Line (Optional)</option>
+                      <option value="">{t('selectLine')} ({t('optional')})</option>
                       {lines.map(line => (
                         <option key={line.id} value={line.id}>{line.name}</option>
                       ))}
@@ -424,14 +426,14 @@ export const ExpensesManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('category')} *</label>
                     <select
                       value={formData.categoryId}
                       onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
                       required
                     >
-                      <option value="">Select Category</option>
+                      <option value="">{t('selectOption')}</option>
                       {categories.length === 0 ? (
                         <option value="" disabled>Loading categories...</option>
                       ) : categories.filter(c => c.isActive).length === 0 ? (
@@ -448,7 +450,7 @@ export const ExpensesManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Amount *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('amount')} *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -461,7 +463,7 @@ export const ExpensesManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('date')} *</label>
                     <input
                       type="date"
                       value={formData.expenseDate}
@@ -472,35 +474,35 @@ export const ExpensesManagement: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('paymentMethod')} *</label>
                     <select
                       value={formData.paymentMethod}
                       onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as any })}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
                       required
                     >
-                      <option value="cash">Cash</option>
-                      <option value="digital">Digital Payment</option>
-                      <option value="bank_transfer">Bank Transfer</option>
-                      <option value="upi">UPI</option>
+                      <option value="cash">{t('cash')}</option>
+                      <option value="digital">{t('digital')}</option>
+                      <option value="bank_transfer">{t('bankTransfer')}</option>
+                      <option value="upi">{t('upi')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('description')} *</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
                     rows={3}
-                    placeholder="Enter expense description..."
+                    placeholder={t('enterValue')}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Receipt URL (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('receiptUrl')} ({t('optional')})</label>
                   <input
                     type="url"
                     value={formData.receiptUrl}
@@ -516,7 +518,7 @@ export const ExpensesManagement: React.FC = () => {
                     onClick={() => setShowAddModal(false)}
                     className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <motion.button
                     type="submit"
@@ -524,7 +526,7 @@ export const ExpensesManagement: React.FC = () => {
                     whileTap={{ scale: 0.98 }}
                     className="px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
                   >
-                    Add Expense
+                    {t('recordExpense')}
                   </motion.button>
                 </div>
               </form>

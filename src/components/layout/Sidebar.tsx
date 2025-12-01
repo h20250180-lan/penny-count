@@ -36,7 +36,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
       { id: 'locations', label: 'Agent Locations', icon: MapPin },
       { id: 'borrowers', label: t('allBorrowers'), icon: UserCheck },
       { id: 'loans', label: t('loanOverview'), icon: CreditCard },
-      { id: 'expenses', label: 'Expenses', icon: Receipt },
+      { id: 'expenses', label: t('expenses'), icon: Receipt },
       { id: 'analytics', label: t('analytics'), icon: TrendingUp },
       { id: 'settings', label: t('settings'), icon: Settings },
     ];
@@ -50,7 +50,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
       { id: 'locations', label: 'Agent Locations', icon: MapPin },
       { id: 'borrowers', label: t('borrowers'), icon: UserCheck },
       { id: 'loans', label: t('loans'), icon: CreditCard },
-      { id: 'expenses', label: 'Expenses', icon: Receipt },
+      { id: 'expenses', label: t('expenses'), icon: Receipt },
       { id: 'commissions', label: t('commissions'), icon: Wallet },
       { id: 'analytics', label: t('reports'), icon: TrendingUp },
     ];
