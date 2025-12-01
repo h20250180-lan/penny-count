@@ -17,10 +17,12 @@ import {
 } from 'lucide-react';
 import { Payment } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
 
 export const Collections: React.FC = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState<string>('all');
@@ -30,6 +32,7 @@ export const Collections: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [borrowerNames, setBorrowerNames] = useState<{ [key: string]: string }>({});
+  const [activeLoans, setActiveLoans] = useState<any[]>([]);
 
   // Load data on component mount
   React.useEffect(() => {
@@ -37,15 +40,19 @@ export const Collections: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const [paymentsData, borrowersData] = await Promise.all([
+        const [paymentsData, borrowersData, loansData] = await Promise.all([
           dataService.getPayments(),
-          dataService.getBorrowers()
+          dataService.getBorrowers(),
+          dataService.getLoans()
         ]);
         setPayments(paymentsData);
 
         const names: { [key: string]: string } = {};
         borrowersData.forEach((b: any) => { names[b.id] = b.name; });
         setBorrowerNames(names);
+
+        const active = loansData.filter((l: any) => l.status === 'active');
+        setActiveLoans(active);
       } catch (err: any) {
         setError(err.message || 'Failed to load payments');
       } finally {
@@ -103,12 +110,14 @@ export const Collections: React.FC = () => {
 
   const handleCollectPaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) return;
+
     const formData = new FormData(e.currentTarget);
-    
+
     const newPayment = {
       loanId: formData.get('loanId') as string,
       borrowerId: formData.get('borrowerId') as string,
-      agentId: '3', // Current user ID
+      agentId: user.id,
       amount: parseInt(formData.get('amount') as string),
       method: formData.get('method') as 'cash' | 'upi' | 'phonepe' | 'qr',
       transactionId: formData.get('transactionId') as string || undefined,
@@ -121,6 +130,7 @@ export const Collections: React.FC = () => {
       setShowCollectModal(false);
     } catch (error) {
       console.error('Error creating payment:', error);
+      alert('Error creating payment: ' + (error instanceof Error ? error.message : String(error)));
     }
   };
 
@@ -438,8 +448,14 @@ export const Collections: React.FC = () => {
                 </label>
                 <select name="loanId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
                   <option value="">{t('selectActiveLoan')}</option>
-                  <option value="L001">L001 - ₹5,750 remaining</option>
-                  <option value="L004">L004 - ₹4,462 remaining</option>
+                  {activeLoans.map(loan => {
+                    const borrowerName = borrowerNames[loan.borrowerId] || 'Unknown';
+                    return (
+                      <option key={loan.id} value={loan.id}>
+                        {borrowerName} - ₹{loan.remainingAmount.toLocaleString()} remaining
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div>
