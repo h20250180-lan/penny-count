@@ -490,9 +490,12 @@ class DataService {
     return (data || []).map(payment => ({
       id: payment.id,
       loanId: payment.loan_id,
+      borrowerId: payment.borrower_id,
       amount: Number(payment.amount),
       paymentDate: new Date(payment.payment_date),
       collectedBy: payment.collected_by,
+      method: payment.method || 'cash',
+      transactionId: payment.transaction_id,
       notes: payment.notes,
       createdAt: new Date(payment.created_at)
     }));
@@ -501,19 +504,36 @@ class DataService {
   async createPayment(payment: Partial<Payment>): Promise<Payment> {
     const { data: { user } } = await supabase.auth.getUser();
 
+    const insertData: any = {
+      loan_id: payment.loanId,
+      amount: payment.amount,
+      payment_date: payment.paymentDate || new Date().toISOString(),
+      collected_by: user?.id || payment.agentId,
+      notes: payment.notes
+    };
+
+    if (payment.borrowerId) {
+      insertData.borrower_id = payment.borrowerId;
+    }
+
+    if (payment.method) {
+      insertData.method = payment.method;
+    }
+
+    if (payment.transactionId) {
+      insertData.transaction_id = payment.transactionId;
+    }
+
     const { data, error } = await supabase
       .from('payments')
-      .insert({
-        loan_id: payment.loanId,
-        amount: payment.amount,
-        payment_date: payment.paymentDate || new Date().toISOString(),
-        collected_by: user?.id,
-        notes: payment.notes
-      })
+      .insert(insertData)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Payment creation error:', error);
+      throw error;
+    }
 
     const { data: loan } = await supabase
       .from('loans')
@@ -549,9 +569,12 @@ class DataService {
     return {
       id: data.id,
       loanId: data.loan_id,
+      borrowerId: data.borrower_id,
       amount: Number(data.amount),
       paymentDate: new Date(data.payment_date),
       collectedBy: data.collected_by,
+      method: data.method || 'cash',
+      transactionId: data.transaction_id,
       notes: data.notes,
       createdAt: new Date(data.created_at)
     };
@@ -574,9 +597,12 @@ class DataService {
     return {
       id: data.id,
       loanId: data.loan_id,
+      borrowerId: data.borrower_id,
       amount: Number(data.amount),
       paymentDate: new Date(data.payment_date),
       collectedBy: data.collected_by,
+      method: data.method || 'cash',
+      transactionId: data.transaction_id,
       notes: data.notes,
       createdAt: new Date(data.created_at)
     };
