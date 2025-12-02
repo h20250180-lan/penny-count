@@ -15,14 +15,16 @@ import {
   Filter,
   MapPin
 } from 'lucide-react';
-import { Payment } from '../../types';
+import { Payment, Borrower, Loan } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
+import { useToast } from '../../contexts/ToastContext';
 
 export const Collections: React.FC = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [methodFilter, setMethodFilter] = useState<string>('all');
@@ -31,8 +33,12 @@ export const Collections: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [borrowers, setBorrowers] = useState<Borrower[]>([]);
   const [borrowerNames, setBorrowerNames] = useState<{ [key: string]: string }>({});
-  const [activeLoans, setActiveLoans] = useState<any[]>([]);
+  const [activeLoans, setActiveLoans] = useState<Loan[]>([]);
+  const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>('');
+  const [filteredLoans, setFilteredLoans] = useState<Loan[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load data on component mount
   React.useEffect(() => {
@@ -46,12 +52,13 @@ export const Collections: React.FC = () => {
           dataService.getLoans()
         ]);
         setPayments(paymentsData);
+        setBorrowers(borrowersData);
 
         const names: { [key: string]: string } = {};
-        borrowersData.forEach((b: any) => { names[b.id] = b.name; });
+        borrowersData.forEach((b: Borrower) => { names[b.id] = b.name; });
         setBorrowerNames(names);
 
-        const active = loansData.filter((l: any) => l.status === 'active');
+        const active = loansData.filter((l: Loan) => l.status === 'active');
         setActiveLoans(active);
       } catch (err: any) {
         setError(err.message || 'Failed to load payments');
@@ -105,32 +112,88 @@ export const Collections: React.FC = () => {
   };
 
   const handleCollectPayment = () => {
+    setSelectedBorrowerId('');
+    setFilteredLoans([]);
     setShowCollectModal(true);
+  };
+
+  const handleBorrowerChange = async (borrowerId: string) => {
+    setSelectedBorrowerId(borrowerId);
+    if (borrowerId) {
+      try {
+        const loans = await dataService.getActiveLoansByBorrower(borrowerId);
+        setFilteredLoans(loans);
+      } catch (error) {
+        console.error('Error loading borrower loans:', error);
+        setFilteredLoans([]);
+        showToast('Failed to load loans for this borrower', 'error');
+      }
+    } else {
+      setFilteredLoans([]);
+    }
   };
 
   const handleCollectPaymentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || isSubmitting) return;
 
     const formData = new FormData(e.currentTarget);
+    const loanId = formData.get('loanId') as string;
+    const amount = parseInt(formData.get('amount') as string);
+    const method = formData.get('method') as 'cash' | 'upi' | 'phonepe' | 'qr';
+    const transactionId = formData.get('transactionId') as string;
+
+    if (!loanId) {
+      showToast('Please select a loan', 'error');
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      showToast('Please enter a valid amount', 'error');
+      return;
+    }
+
+    const selectedLoan = filteredLoans.find(l => l.id === loanId);
+    if (selectedLoan && amount > selectedLoan.remainingAmount) {
+      showToast(`Payment amount cannot exceed remaining balance of ₹${selectedLoan.remainingAmount}`, 'error');
+      return;
+    }
+
+    if ((method === 'upi' || method === 'phonepe' || method === 'qr') && !transactionId) {
+      showToast('Transaction ID is required for digital payments', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
 
     const newPayment = {
-      loanId: formData.get('loanId') as string,
-      borrowerId: formData.get('borrowerId') as string,
+      loanId,
+      borrowerId: selectedBorrowerId,
       agentId: user.id,
-      amount: parseInt(formData.get('amount') as string),
-      method: formData.get('method') as 'cash' | 'upi' | 'phonepe' | 'qr',
-      transactionId: formData.get('transactionId') as string || undefined,
+      amount,
+      method,
+      transactionId: transactionId || undefined,
       isOffline: false
     };
 
     try {
       const createdPayment = await dataService.createPayment(newPayment);
-      setPayments([...payments, createdPayment]);
+      setPayments([createdPayment, ...payments]);
       setShowCollectModal(false);
+      showToast(`Payment of ₹${amount} recorded successfully!`, 'success');
+
+      const [updatedPayments, updatedLoans] = await Promise.all([
+        dataService.getPayments(),
+        dataService.getLoans()
+      ]);
+      setPayments(updatedPayments);
+      const active = updatedLoans.filter(l => l.status === 'active');
+      setActiveLoans(active);
     } catch (error) {
       console.error('Error creating payment:', error);
-      alert('Error creating payment: ' + (error instanceof Error ? error.message : String(error)));
+      showToast('Failed to record payment: ' + (error instanceof Error ? error.message : String(error)), 'error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -433,31 +496,59 @@ export const Collections: React.FC = () => {
             <form className="space-y-4" onSubmit={handleCollectPaymentSubmit}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Borrower
+                  Select Borrower *
                 </label>
-                <select name="borrowerId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="">{t('chooseBorrower')}</option>
-                  {Object.entries(borrowerNames).map(([id, name]) => (
-                    <option key={id} value={id}>{name}</option>
+                <select
+                  value={selectedBorrowerId}
+                  onChange={(e) => handleBorrowerChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  required
+                >
+                  <option value="">Choose a borrower...</option>
+                  {borrowers.map(borrower => (
+                    <option key={borrower.id} value={borrower.id}>
+                      {borrower.name} {borrower.serialNumber ? `(${borrower.serialNumber})` : ''} - {borrower.phone}
+                    </option>
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Loan ID
-                </label>
-                <select name="loanId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="">{t('selectActiveLoan')}</option>
-                  {activeLoans.map(loan => {
-                    const borrowerName = borrowerNames[loan.borrowerId] || 'Unknown';
-                    return (
-                      <option key={loan.id} value={loan.id}>
-                        {borrowerName} - ₹{loan.remainingAmount.toLocaleString()} remaining
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+
+              {selectedBorrowerId && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Loan *
+                  </label>
+                  {filteredLoans.length === 0 ? (
+                    <div className="w-full px-3 py-3 border border-yellow-300 bg-yellow-50 rounded-lg text-yellow-700 text-sm">
+                      No active loans found for this borrower
+                    </div>
+                  ) : (
+                    <select
+                      name="loanId"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      required
+                    >
+                      <option value="">Select a loan...</option>
+                      {filteredLoans.map(loan => {
+                        const daysOverdue = Math.floor((new Date().getTime() - new Date(loan.dueDate).getTime()) / (1000 * 60 * 60 * 24));
+                        const isOverdue = daysOverdue > 0;
+                        return (
+                          <option key={loan.id} value={loan.id}>
+                            ₹{loan.remainingAmount.toLocaleString()} remaining - Due: {new Date(loan.dueDate).toLocaleDateString()}
+                            {isOverdue ? ` (${daysOverdue} days overdue)` : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  )}
+                </div>
+              )}
+
+              {!selectedBorrowerId && (
+                <div className="w-full px-3 py-3 border border-gray-300 bg-gray-50 rounded-lg text-gray-500 text-sm">
+                  Please select a borrower first to view their loans
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Payment Amount (₹)
@@ -483,7 +574,8 @@ export const Collections: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Transaction ID (Optional)
+                  Transaction ID
+                  <span className="text-xs text-gray-500 ml-1">(Required for UPI/PhonePe/QR)</span>
                 </label>
                 <input
                   type="text"
@@ -492,19 +584,41 @@ export const Collections: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                 />
               </div>
+
+              {selectedBorrowerId && filteredLoans.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 font-medium mb-1">Selected Borrower Info</p>
+                  <p className="text-xs text-blue-700">
+                    Name: {borrowers.find(b => b.id === selectedBorrowerId)?.name}
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Active Loans: {filteredLoans.length}
+                  </p>
+                  <p className="text-xs text-blue-700">
+                    Total Outstanding: ₹{filteredLoans.reduce((sum, l) => sum + l.remainingAmount, 0).toLocaleString()}
+                  </p>
+                </div>
+              )}
+
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowCollectModal(false)}
+                  onClick={() => {
+                    setShowCollectModal(false);
+                    setSelectedBorrowerId('');
+                    setFilteredLoans([]);
+                  }}
                   className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting || !selectedBorrowerId || filteredLoans.length === 0}
                 >
-                  Record Payment
+                  {isSubmitting ? 'Recording...' : 'Record Payment'}
                 </button>
               </div>
             </form>

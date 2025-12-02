@@ -289,6 +289,59 @@ class DataService {
     }));
   }
 
+  async getLoansByBorrower(borrowerId: string): Promise<Loan[]> {
+    const { data, error } = await supabase
+      .from('loans')
+      .select('*')
+      .eq('borrower_id', borrowerId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(loan => ({
+      id: loan.id,
+      borrowerId: loan.borrower_id,
+      lineId: loan.line_id,
+      amount: Number(loan.principal),
+      interestRate: Number(loan.interest_rate),
+      totalAmount: Number(loan.total_amount),
+      paidAmount: Number(loan.amount_paid),
+      remainingAmount: Number(loan.balance),
+      status: loan.status,
+      tenure: loan.tenure,
+      disbursedAt: new Date(loan.disbursed_date),
+      dueDate: new Date(loan.due_date),
+      createdAt: new Date(loan.created_at)
+    }));
+  }
+
+  async getActiveLoansByBorrower(borrowerId: string): Promise<Loan[]> {
+    const { data, error } = await supabase
+      .from('loans')
+      .select('*')
+      .eq('borrower_id', borrowerId)
+      .eq('status', 'active')
+      .order('due_date', { ascending: true });
+
+    if (error) throw error;
+
+    return (data || []).map(loan => ({
+      id: loan.id,
+      borrowerId: loan.borrower_id,
+      lineId: loan.line_id,
+      amount: Number(loan.principal),
+      interestRate: Number(loan.interest_rate),
+      totalAmount: Number(loan.total_amount),
+      paidAmount: Number(loan.amount_paid),
+      remainingAmount: Number(loan.balance),
+      status: loan.status,
+      tenure: loan.tenure,
+      disbursedAt: new Date(loan.disbursed_date),
+      dueDate: new Date(loan.due_date),
+      createdAt: new Date(loan.created_at)
+    }));
+  }
+
   async createLoan(loan: Partial<Loan>): Promise<Loan> {
     const principal = loan.amount || 0;
     const interestRate = loan.interestRate || 10;
