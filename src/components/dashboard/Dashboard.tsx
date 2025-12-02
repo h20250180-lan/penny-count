@@ -13,6 +13,7 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
   const { selectedLine } = useLineContext();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lineCollections, setLineCollections] = useState<any[]>([]);
 
   const handleQuickAction = (action: string) => {
     console.log('Quick action triggered:', action);
@@ -115,6 +116,11 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
             selectedLine?.id
           );
           setMetrics(dashboardMetrics);
+
+          if (user.role === 'owner' || user.role === 'co-owner') {
+            const lineWiseData = await dataService.getLineWiseCollections(user.id, user.role);
+            setLineCollections(lineWiseData);
+          }
         } catch (error) {
           console.error('Error loading dashboard metrics:', error);
         } finally {
@@ -196,8 +202,69 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
       {/* Metrics Cards */}
       {metrics && <DashboardCards metrics={metrics} />}
 
+      {/* Line-wise Collections */}
+      {(user?.role === 'owner' || user?.role === 'co-owner') && lineCollections.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Collections by Line</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {lineCollections.map((line) => (
+              <motion.div
+                key={line.lineId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -4 }}
+                className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">{line.lineName}</h3>
+                  <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    line.collectionEfficiency >= 80 ? 'bg-green-100 text-green-800' :
+                    line.collectionEfficiency >= 50 ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {line.collectionEfficiency}% Efficiency
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Total Collected</span>
+                    <span className="text-lg font-bold text-green-600">
+                      ₹{line.totalCollected.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Total Disbursed</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      ₹{line.totalDisbursed.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Active Loans</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {line.activeLoans}
+                    </span>
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-100">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Current Balance</span>
+                      <span className="text-sm font-bold text-teal-600">
+                        ₹{(line.currentBalance || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recent Activity + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <RecentActivity onViewAll={onViewAll} />
         <QuickActions onAction={handleQuickAction} />
       </div>

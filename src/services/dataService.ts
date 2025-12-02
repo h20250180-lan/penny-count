@@ -1077,9 +1077,17 @@ class DataService {
       }
     }
 
+    const lineIds = filteredLines.map(l => l.id);
+
+    const { data: paymentsData } = await supabase
+      .from('payments')
+      .select('amount, loan_id')
+      .in('loan_id', loans.filter(l => lineIds.includes(l.lineId)).map(l => l.id));
+
+    const totalCollected = (paymentsData || []).reduce((sum, p) => sum + Number(p.amount), 0);
+
     const totalCapital = filteredLines.reduce((sum, l) => sum + l.initialCapital, 0);
     const totalDisbursed = filteredLines.reduce((sum, l) => sum + l.totalDisbursed, 0);
-    const totalCollected = filteredLines.reduce((sum, l) => sum + l.totalCollected, 0);
     const cashOnHand = totalCapital - totalDisbursed + totalCollected;
 
     const activeLoans = loans.filter(l => l.status === 'active' &&
@@ -1092,16 +1100,81 @@ class DataService {
       ? Math.round((totalCollected / totalDisbursed) * 100)
       : 0;
 
+    const overdueLoans = activeLoans.filter(l => {
+      const daysSinceLastPayment = Math.floor((Date.now() - new Date(l.startDate).getTime()) / (1000 * 60 * 60 * 24));
+      return daysSinceLastPayment > 7 && l.remainingAmount > 0;
+    }).length;
+
     return {
       totalCapital,
+      totalDisbursed,
+      totalCollected,
+      profit: totalCollected - totalDisbursed,
       cashOnHand,
       activeLoans: activeLoans.length,
       totalBorrowers: activeBorrowers.length,
+      totalLines: filteredLines.length,
       collectionEfficiency,
+      overdueLoans,
       pendingCollections: activeLoans.reduce((sum, l) => sum + l.remainingAmount, 0),
       lineCount: filteredLines.length,
       recentActivity: []
     };
+  }
+
+  async getLineWiseCollections(userId: string, role: string): Promise<any[]> {
+    const lines = await this.getLines();
+    const loans = await this.getLoans();
+
+    let filteredLines = lines;
+
+    if (role === 'agent') {
+      filteredLines = lines.filter(l => l.agentId === userId);
+    } else if (role === 'co-owner') {
+      filteredLines = lines.filter(l => l.ownerId === userId || l.coOwnerId === userId);
+    }
+
+    const lineCollections = await Promise.all(
+      filteredLines.map(async (line) => {
+        const lineLoans = loans.filter(l => l.lineId === line.id);
+        const loanIds = lineLoans.map(l => l.id);
+
+        if (loanIds.length === 0) {
+          return {
+            lineId: line.id,
+            lineName: line.name,
+            totalCollected: 0,
+            totalDisbursed: line.totalDisbursed,
+            collectionEfficiency: 0,
+            activeLoans: 0
+          };
+        }
+
+        const { data: paymentsData } = await supabase
+          .from('payments')
+          .select('amount')
+          .in('loan_id', loanIds);
+
+        const totalCollected = (paymentsData || []).reduce((sum, p) => sum + Number(p.amount), 0);
+        const activeLoans = lineLoans.filter(l => l.status === 'active').length;
+        const collectionEfficiency = line.totalDisbursed > 0
+          ? Math.round((totalCollected / line.totalDisbursed) * 100)
+          : 0;
+
+        return {
+          lineId: line.id,
+          lineName: line.name,
+          totalCollected,
+          totalDisbursed: line.totalDisbursed,
+          collectionEfficiency,
+          activeLoans,
+          initialCapital: line.initialCapital,
+          currentBalance: line.currentBalance
+        };
+      })
+    );
+
+    return lineCollections;
   }
 
   async getExpenseCategories(): Promise<any[]> {
