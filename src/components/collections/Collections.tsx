@@ -18,6 +18,7 @@ import {
 import { Payment, Borrower, Loan } from '../../types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLineContext } from '../../contexts/LineContext';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../../contexts/ToastContext';
 import { offlineQueueService } from '../../services/offlineQueueService';
@@ -25,6 +26,7 @@ import { offlineQueueService } from '../../services/offlineQueueService';
 export const Collections: React.FC = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { selectedLine } = useLineContext();
   const { showToast } = useToast();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,7 +58,11 @@ export const Collections: React.FC = () => {
           dataService.getLoans()
         ]);
         setPayments(paymentsData);
-        setBorrowers(borrowersData);
+
+        const lineBorrowers = selectedLine
+          ? borrowersData.filter(b => b.lineId === selectedLine.id)
+          : borrowersData;
+        setBorrowers(lineBorrowers);
 
         const names: { [key: string]: string } = {};
         borrowersData.forEach((b: Borrower) => { names[b.id] = b.name; });
@@ -72,7 +78,7 @@ export const Collections: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [selectedLine]);
 
   const filteredPayments = payments.filter(payment => {
     const borrowerName = borrowerNames[payment.borrowerId] || '';
@@ -125,7 +131,7 @@ export const Collections: React.FC = () => {
     setSelectedBorrowerId(borrowerId);
     if (borrowerId) {
       try {
-        const loans = await dataService.getActiveLoansByBorrower(borrowerId);
+        const loans = await dataService.getActiveLoansByBorrower(borrowerId, selectedLine?.id);
         setFilteredLoans(loans);
       } catch (error) {
         console.error('Error loading borrower loans:', error);

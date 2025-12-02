@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Loan, Borrower } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLineContext } from '../../contexts/LineContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../../contexts/ToastContext';
@@ -116,6 +117,7 @@ const emptyBorrowerMap: { [key: string]: string } = {};
 
 export const LoansManagement: React.FC = () => {
   const { user } = useAuth();
+  const { selectedLine } = useLineContext();
   const { t } = useLanguage();
   const [loans, setLoans] = useState<Loan[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -258,7 +260,7 @@ export const LoansManagement: React.FC = () => {
 
       const newLoan = {
         borrowerId,
-        lineId: formData.get('lineId') as string,
+        lineId: selectedLine?.id,
         agentId: user!.id,
         amount,
         interestRate: monthlyInterestRate,
@@ -762,16 +764,14 @@ export const LoansManagement: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Line
+              <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Line
                 </label>
-                <select name="lineId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="">Choose line</option>
-                  {lines.map(line => (
-                    <option key={line.id} value={line.id}>{line.name}</option>
-                  ))}
-                </select>
+                <p className="font-semibold text-gray-900">
+                  {selectedLine?.name || 'No line selected'}
+                </p>
+                <p className="text-xs text-gray-600 mt-1">Loan will be created in this line</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -907,7 +907,7 @@ export const LoansManagement: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tenure:</span>
-                      <span className="font-medium">{selectedLoan.tenure} days</span>
+                      <span className="font-medium">{selectedLoan.tenure} {selectedLoan.tenure === 1 ? 'Month' : 'Months'}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Frequency:</span>

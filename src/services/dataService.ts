@@ -315,13 +315,18 @@ class DataService {
     }));
   }
 
-  async getActiveLoansByBorrower(borrowerId: string): Promise<Loan[]> {
-    const { data, error } = await supabase
+  async getActiveLoansByBorrower(borrowerId: string, lineId?: string): Promise<Loan[]> {
+    let query = supabase
       .from('loans')
       .select('*')
       .eq('borrower_id', borrowerId)
-      .eq('status', 'active')
-      .order('due_date', { ascending: true });
+      .eq('status', 'active');
+
+    if (lineId) {
+      query = query.eq('line_id', lineId);
+    }
+
+    const { data, error } = await query.order('due_date', { ascending: true });
 
     if (error) throw error;
 
@@ -345,11 +350,14 @@ class DataService {
   async createLoan(loan: Partial<Loan>): Promise<Loan> {
     const principal = loan.amount || 0;
     const interestRate = loan.interestRate || 10;
-    const totalAmount = principal * (1 + interestRate / 100);
+    const totalAmount = loan.totalAmount || (principal * (1 + interestRate / 100));
     const tenure = loan.tenure || 30;
     const disbursedDate = loan.disbursedAt || new Date();
-    const dueDate = new Date(disbursedDate);
-    dueDate.setDate(dueDate.getDate() + tenure);
+    const dueDate = loan.dueDate || new Date(disbursedDate);
+
+    if (!loan.dueDate) {
+      dueDate.setMonth(dueDate.getMonth() + tenure);
+    }
 
     const { data, error } = await supabase
       .from('loans')
