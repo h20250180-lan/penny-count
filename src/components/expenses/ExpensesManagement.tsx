@@ -8,11 +8,13 @@ import {
 import { Expense, ExpenseCategory, Line } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useLineContext } from '../../contexts/LineContext';
 import { dataService } from '../../services/dataService';
 
 export const ExpensesManagement: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { selectedLine } = useLineContext();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
@@ -61,6 +63,7 @@ export const ExpensesManagement: React.FC = () => {
     try {
       await dataService.createExpense({
         ...formData,
+        lineId: selectedLine ? selectedLine.id : formData.lineId,
         amount: parseFloat(formData.amount),
         submittedBy: user?.id || ''
       });
@@ -411,19 +414,26 @@ export const ExpensesManagement: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('lineName')}</label>
-                    <select
-                      value={formData.lineId}
-                      onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
-                    >
-                      <option value="">{t('selectLine')} ({t('optional')})</option>
-                      {lines.map(line => (
-                        <option key={line.id} value={line.id}>{line.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {selectedLine ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                      <p className="text-sm text-blue-700 font-medium mb-1">{t('recordingFor')}</p>
+                      <p className="text-lg font-bold text-blue-900">📍 {selectedLine.name}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">{t('lineName')}</label>
+                      <select
+                        value={formData.lineId}
+                        onChange={(e) => setFormData({ ...formData, lineId: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+                      >
+                        <option value="">{t('selectLine')} ({t('optional')})</option>
+                        {lines.map(line => (
+                          <option key={line.id} value={line.id}>{line.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('category')} *</label>

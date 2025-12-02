@@ -603,15 +603,23 @@ export const BorrowersManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Interest Rate (%)</label>
                 <input name="interestRate" type="number" step="0.1" className="w-full px-3 py-2 border rounded" defaultValue={2.5} />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Assign Line</label>
-                <select name="lineId" className="w-full px-3 py-2 border rounded">
-                  <option value="">Select Line</option>
-                  {(user?.role === 'agent' ? lines.filter(l => l.agentId === user.id) : lines).map(l => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
-                  ))}
-                </select>
-              </div>
+              {selectedLine ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <p className="text-sm text-blue-700 font-medium mb-1">Creating loan for line:</p>
+                  <p className="text-lg font-bold text-blue-900">📍 {selectedLine.name}</p>
+                  <input type="hidden" name="lineId" value={selectedLine.id} />
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Assign Line</label>
+                  <select name="lineId" className="w-full px-3 py-2 border rounded" required>
+                    <option value="">Select Line</option>
+                    {(user?.role === 'agent' ? lines.filter(l => l.agentId === user.id) : lines).map(l => (
+                      <option key={l.id} value={l.id}>{l.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex space-x-3 pt-4">
                 <button type="button" onClick={() => setShowNewLoanModal(false)} className="flex-1 bg-gray-100 py-2 rounded">Cancel</button>
                 <button type="submit" className="flex-1 bg-emerald-500 text-white py-2 rounded">Create Loan</button>

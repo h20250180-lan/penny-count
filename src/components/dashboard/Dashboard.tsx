@@ -5,10 +5,12 @@ import { RecentActivity } from './RecentActivity';
 import { QuickActions } from './QuickActions';
 import { DashboardMetrics } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLineContext } from '../../contexts/LineContext';
 import { dataService } from '../../services/dataService';
 
 export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({ onViewAll }) => {
   const { user } = useAuth();
+  const { selectedLine } = useLineContext();
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -107,7 +109,11 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
     const loadMetrics = async () => {
       if (user) {
         try {
-          const dashboardMetrics = await dataService.getDashboardMetrics(user.id, user.role);
+          const dashboardMetrics = await dataService.getDashboardMetrics(
+            user.id,
+            user.role,
+            selectedLine?.id
+          );
           setMetrics(dashboardMetrics);
         } catch (error) {
           console.error('Error loading dashboard metrics:', error);
@@ -118,7 +124,7 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
     };
 
     loadMetrics();
-  }, [user]);
+  }, [user, selectedLine]);
 
   // If agent, ensure cashOnHand and collection metrics are accurate by computing from lines
   React.useEffect(() => {

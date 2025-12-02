@@ -706,16 +706,21 @@ class DataService {
     if (error) throw error;
   }
 
-  async getDashboardMetrics(userId: string, role: string): Promise<DashboardMetrics> {
+  async getDashboardMetrics(userId: string, role: string, lineId?: string): Promise<DashboardMetrics> {
     const lines = await this.getLines();
     const loans = await this.getLoans();
     const borrowers = await this.getBorrowers();
 
     let filteredLines = lines;
-    if (role === 'agent') {
-      filteredLines = lines.filter(l => l.agentId === userId);
-    } else if (role === 'co-owner') {
-      filteredLines = lines.filter(l => l.ownerId === userId || l.coOwnerId === userId);
+
+    if (lineId) {
+      filteredLines = lines.filter(l => l.id === lineId);
+    } else {
+      if (role === 'agent') {
+        filteredLines = lines.filter(l => l.agentId === userId);
+      } else if (role === 'co-owner') {
+        filteredLines = lines.filter(l => l.ownerId === userId || l.coOwnerId === userId);
+      }
     }
 
     const totalCapital = filteredLines.reduce((sum, l) => sum + l.initialCapital, 0);
