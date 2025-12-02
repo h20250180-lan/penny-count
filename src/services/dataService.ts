@@ -813,6 +813,138 @@ class DataService {
     };
   }
 
+  async getWithdrawals(lineId?: string, date?: string, status?: string): Promise<any[]> {
+    let query = supabase
+      .from('withdrawals')
+      .select(`
+        *,
+        line:lines(*),
+        withdrawnBy:users!withdrawals_withdrawn_by_fkey(*),
+        approvedBy:users!withdrawals_approved_by_fkey(*)
+      `)
+      .order('withdrawal_date', { ascending: false });
+
+    if (lineId) {
+      query = query.eq('line_id', lineId);
+    }
+
+    if (date) {
+      query = query.eq('withdrawal_date', date);
+    }
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map(w => ({
+      id: w.id,
+      lineId: w.line_id,
+      amount: Number(w.amount),
+      withdrawalDate: new Date(w.withdrawal_date),
+      withdrawnBy: w.withdrawn_by,
+      withdrawnByName: w.withdrawnBy?.name || 'Unknown',
+      reason: w.reason,
+      notes: w.notes,
+      approvedBy: w.approved_by,
+      approvedByName: w.approvedBy?.name,
+      status: w.status,
+      approvedAt: w.approved_at ? new Date(w.approved_at) : null,
+      createdAt: new Date(w.created_at),
+      lineName: w.line?.name || 'General'
+    }));
+  }
+
+  async createWithdrawal(withdrawal: {
+    lineId?: string;
+    amount: number;
+    withdrawalDate?: string;
+    reason: string;
+    notes?: string;
+  }): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const insertData: any = {
+      amount: withdrawal.amount,
+      withdrawn_by: user?.id,
+      reason: withdrawal.reason,
+      notes: withdrawal.notes,
+      withdrawal_date: withdrawal.withdrawalDate || new Date().toISOString().split('T')[0]
+    };
+
+    if (withdrawal.lineId) {
+      insertData.line_id = withdrawal.lineId;
+    }
+
+    const userRole = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user?.id)
+      .single();
+
+    if (userRole.data?.role === 'owner') {
+      insertData.status = 'approved';
+      insertData.approved_by = user?.id;
+      insertData.approved_at = new Date().toISOString();
+    }
+
+    const { data, error } = await supabase
+      .from('withdrawals')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      lineId: data.line_id,
+      amount: Number(data.amount),
+      withdrawalDate: new Date(data.withdrawal_date),
+      withdrawnBy: data.withdrawn_by,
+      reason: data.reason,
+      notes: data.notes,
+      status: data.status,
+      createdAt: new Date(data.created_at)
+    };
+  }
+
+  async approveWithdrawal(id: string): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('withdrawals')
+      .update({
+        status: 'approved',
+        approved_by: user?.id,
+        approved_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  }
+
+  async rejectWithdrawal(id: string): Promise<any> {
+    const { data, error } = await supabase
+      .from('withdrawals')
+      .update({
+        status: 'rejected'
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  }
+
   async getCommissions(): Promise<Commission[]> {
     const { data, error } = await supabase
       .from('commissions')

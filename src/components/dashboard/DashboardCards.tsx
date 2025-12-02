@@ -5,7 +5,7 @@ import {
   TrendingDown,
   Users,
   CreditCard,
-  DollarSign,
+  IndianRupee,
   AlertTriangle,
   Building2,
   Wallet
@@ -36,7 +36,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
         {
           title: t('totalDisbursed'),
           value: `₹${metrics.totalDisbursed?.toLocaleString()}`,
-          icon: DollarSign,
+          icon: IndianRupee,
           color: 'bg-green-500',
           change: `+12% ${t('fromLastMonth')}`,
           trend: 'up'
@@ -89,7 +89,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
         {
           title: t('totalDisbursed'),
           value: `₹${metrics.totalDisbursed?.toLocaleString()}`,
-          icon: DollarSign,
+          icon: IndianRupee,
           color: 'bg-green-500',
           change: `+8% ${t('thisMonth')}`,
           trend: 'up'

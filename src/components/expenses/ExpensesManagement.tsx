@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  DollarSign, Plus, Calendar, Filter, CheckCircle, XCircle, Clock,
+  IndianRupee, Plus, Calendar, Filter, CheckCircle, XCircle, Clock,
   Receipt, Trash2, Edit2, Search, TrendingUp, PieChart, Download,
   FileText, Image as ImageIcon, X
 } from 'lucide-react';
@@ -21,7 +21,7 @@ export const ExpensesManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'paid'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -84,17 +84,6 @@ export const ExpensesManagement: React.FC = () => {
   };
 
 
-  const handleMarkPaid = async (expenseId: string) => {
-    try {
-      await dataService.updateExpense(expenseId, {
-        status: 'paid',
-        paidAt: new Date()
-      });
-      loadData();
-    } catch (error) {
-      console.error('Error marking expense as paid:', error);
-    }
-  };
 
   const filteredExpenses = expenses.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -110,7 +99,6 @@ export const ExpensesManagement: React.FC = () => {
 
   const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   const approvedExpenses = expenses.filter(e => e.status === 'approved').length;
-  const paidExpenses = expenses.filter(e => e.status === 'paid').length;
 
   const categoryTotals = categories.map(cat => ({
     category: cat.name,
@@ -253,7 +241,6 @@ export const ExpensesManagement: React.FC = () => {
             <option value="pending">{t('pending')}</option>
             <option value="approved">{t('approvedExpenses')}</option>
             <option value="rejected">{t('rejected')}</option>
-            <option value="paid">{t('paid')}</option>
           </select>
 
           <select
@@ -344,23 +331,10 @@ export const ExpensesManagement: React.FC = () => {
                           Rejected
                         </span>
                       )}
-                      {expense.status === 'paid' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Paid
-                        </span>
-                      )}
                     </td>
                     <td className="px-6 py-4 text-sm">
                       <div className="flex items-center space-x-2">
-                        {user?.role !== 'agent' && expense.status === 'approved' && (
-                          <button
-                            onClick={() => handleMarkPaid(expense.id)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Mark as Paid"
-                          >
-                            <DollarSign className="w-5 h-5" />
-                          </button>
+                        {user?.role !== 'agent' && expense.status === 'approved' && (null
                         )}
                         {expense.receiptUrl && (
                           <a

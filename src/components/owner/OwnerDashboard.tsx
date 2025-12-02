@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  TrendingUp, TrendingDown, DollarSign, Calendar, Download,
+  TrendingUp, TrendingDown, IndianRupee, Calendar, Download,
   MapPin, Users, Activity, Lock, Unlock, Edit2, Save, X
 } from 'lucide-react';
 import { DailyAccount, Line, Expense, QRPayment } from '../../types';
@@ -22,6 +22,7 @@ export const OwnerDashboard: React.FC = () => {
   const [collections, setCollections] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [qrPayments, setQRPayments] = useState<QRPayment[]>([]);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [isTeluguMode, setIsTeluguMode] = useState(false);
 
   useEffect(() => {
@@ -36,13 +37,15 @@ export const OwnerDashboard: React.FC = () => {
         linesData,
         collectionsData,
         expensesData,
-        qrPaymentsData
+        qrPaymentsData,
+        withdrawalsData
       ] = await Promise.all([
         dataService.getDailyAccount(selectedDate, selectedLine === 'all' ? undefined : selectedLine),
         dataService.getLines(),
         dataService.getPaymentsByDate(selectedDate, selectedLine === 'all' ? undefined : selectedLine),
         dataService.getExpensesByDate(selectedDate, selectedLine === 'all' ? undefined : selectedLine),
-        dataService.getQRPaymentsByDate(selectedDate, selectedLine === 'all' ? undefined : selectedLine)
+        dataService.getQRPaymentsByDate(selectedDate, selectedLine === 'all' ? undefined : selectedLine),
+        dataService.getWithdrawals(selectedLine === 'all' ? undefined : selectedLine, selectedDate)
       ]);
 
       setDailyAccount(accountData);
@@ -50,6 +53,7 @@ export const OwnerDashboard: React.FC = () => {
       setCollections(collectionsData);
       setExpenses(expensesData);
       setQRPayments(qrPaymentsData);
+      setWithdrawals(withdrawalsData);
 
       if (accountData) {
         setEditedOpeningBalance(accountData.openingBalance.toString());
@@ -101,9 +105,10 @@ export const OwnerDashboard: React.FC = () => {
   const regularCollections = collections.filter(c => c.paymentType === 'regular' || !c.paymentType).reduce((sum, c) => sum + c.amount, 0);
   const penaltyCollections = collections.filter(c => c.paymentType === 'penalty').reduce((sum, c) => sum + c.amount, 0);
   const totalCollections = regularCollections + penaltyCollections;
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const approvedExpenses = expenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + e.amount, 0);
+  const approvedWithdrawals = withdrawals.filter(w => w.status === 'approved').reduce((sum, w) => sum + w.amount, 0);
   const totalQRPayments = qrPayments.reduce((sum, q) => sum + q.amount, 0);
-  const netBalance = totalCollections + totalQRPayments - totalExpenses;
+  const netBalance = totalCollections + totalQRPayments - approvedExpenses - approvedWithdrawals;
   const closingBalance = (dailyAccount?.openingBalance || 0) + netBalance;
 
   return (
@@ -272,8 +277,13 @@ export const OwnerDashboard: React.FC = () => {
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
           <div className="relative">
             <p className="text-red-100 text-sm font-medium mb-2">{isTeluguMode ? teluguTranslations.expenses : 'Expenses'}</p>
-            <p className="text-3xl font-bold">{isTeluguMode ? formatTeluguCurrency(totalExpenses) : `₹${totalExpenses.toLocaleString()}`}</p>
-            <p className="text-red-100 text-xs mt-2">{expenses.length} {isTeluguMode ? 'ఖర్చులు' : 'expenses'}</p>
+            <p className="text-3xl font-bold">{isTeluguMode ? formatTeluguCurrency(approvedExpenses) : `₹${approvedExpenses.toLocaleString()}`}</p>
+            <div className="mt-2 space-y-1">
+              <p className="text-red-100 text-xs">Approved: {expenses.filter(e => e.status === 'approved').length}</p>
+              {expenses.filter(e => e.status === 'pending').length > 0 && (
+                <p className="text-red-100 text-xs">Pending: {expenses.filter(e => e.status === 'pending').length}</p>
+              )}
+            </div>
           </div>
         </motion.div>
 
