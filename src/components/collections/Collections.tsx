@@ -20,6 +20,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
 import { useToast } from '../../contexts/ToastContext';
+import { offlineQueueService } from '../../services/offlineQueueService';
 
 export const Collections: React.FC = () => {
   const { t } = useLanguage();
@@ -39,6 +40,9 @@ export const Collections: React.FC = () => {
   const [selectedBorrowerId, setSelectedBorrowerId] = useState<string>('');
   const [filteredLoans, setFilteredLoans] = useState<Loan[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState({ success: 0, failed: 0, total: 0 });
 
   // Load data on component mount
   React.useEffect(() => {
@@ -200,6 +204,50 @@ export const Collections: React.FC = () => {
   const handleViewPayment = (payment: Payment) => {
     setSelectedPayment(payment);
     setShowDetailsModal(true);
+  };
+
+  const handleSyncData = async () => {
+    if (!user) return;
+
+    if (!navigator.onLine) {
+      showToast('Cannot sync while offline', 'error');
+      return;
+    }
+
+    const pendingCount = offlineQueueService.getPendingCount();
+    if (pendingCount === 0) {
+      showToast('No pending items to sync', 'info');
+      return;
+    }
+
+    setShowSyncModal(true);
+    setIsSyncing(true);
+    setSyncProgress({ success: 0, failed: 0, total: pendingCount });
+
+    try {
+      const result = await offlineQueueService.syncQueue(user.id);
+      setSyncProgress({ success: result.success, failed: result.failed, total: pendingCount });
+
+      if (result.success > 0) {
+        showToast(`Successfully synced ${result.success} items!`, 'success');
+        const [updatedPayments, updatedLoans] = await Promise.all([
+          dataService.getPayments(),
+          dataService.getLoans()
+        ]);
+        setPayments(updatedPayments);
+        const active = updatedLoans.filter(l => l.status === 'active');
+        setActiveLoans(active);
+      }
+
+      if (result.failed > 0) {
+        showToast(`${result.failed} items failed to sync`, 'error');
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      showToast('Failed to sync data: ' + (error instanceof Error ? error.message : String(error)), 'error');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const todayCollections = payments.filter(p => {
@@ -368,11 +416,16 @@ export const Collections: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={handleSyncData}
             className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-center hover:bg-orange-100 transition-colors"
           >
             <TrendingUp className="w-8 h-8 text-orange-600 mx-auto mb-2" />
             <div className="text-orange-600 font-medium">Sync Data</div>
-            <div className="text-sm text-orange-500 mt-1">Upload offline data</div>
+            <div className="text-sm text-orange-500 mt-1">
+              {offlineQueueService.getPendingCount() > 0
+                ? `${offlineQueueService.getPendingCount()} pending items`
+                : 'Upload offline data'}
+            </div>
           </motion.button>
         </div>
       </motion.div>
@@ -622,6 +675,54 @@ export const Collections: React.FC = () => {
                 </button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Sync Data Modal */}
+      {showSyncModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 w-full max-w-md"
+          >
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Sync Offline Data</h2>
+
+            {isSyncing ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Syncing {syncProgress.total} items...</p>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: `${syncProgress.total > 0 ? ((syncProgress.success + syncProgress.failed) / syncProgress.total) * 100 : 0}%`
+                    }}
+                  ></div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <p className="text-green-800 font-medium">Sync Complete!</p>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-sm text-green-700">✓ {syncProgress.success} items synced successfully</p>
+                    {syncProgress.failed > 0 && (
+                      <p className="text-sm text-red-700">✗ {syncProgress.failed} items failed</p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSyncModal(false)}
+                  className="w-full bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            )}
           </motion.div>
         </div>
       )}

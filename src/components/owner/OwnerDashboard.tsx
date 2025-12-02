@@ -8,6 +8,7 @@ import { DailyAccount, Line, Expense, QRPayment } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
 import { AgentLocationMap } from '../location/AgentLocationMap';
+import { teluguTranslations, formatTeluguCurrency, formatTeluguDate } from '../../utils/teluguTranslations';
 
 export const OwnerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -21,6 +22,7 @@ export const OwnerDashboard: React.FC = () => {
   const [collections, setCollections] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [qrPayments, setQRPayments] = useState<QRPayment[]>([]);
+  const [isTeluguMode, setIsTeluguMode] = useState(false);
 
   useEffect(() => {
     loadDailyData();
@@ -107,18 +109,26 @@ export const OwnerDashboard: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-teal-900">Owner Dashboard</h1>
-          <p className="text-gray-600 mt-1">Monitor all operations and daily accounts</p>
+          <h1 className="text-3xl font-bold text-teal-900">{isTeluguMode ? 'యజమాని డాష్‌బోర్డ్' : 'Owner Dashboard'}</h1>
+          <p className="text-gray-600 mt-1">{isTeluguMode ? 'అన్ని కార్యకలాపాలను మరియు రోజువారీ ఖాతాలను పర్యవేక్షించండి' : 'Monitor all operations and daily accounts'}</p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleExportToExcel}
-          className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
-        >
-          <Download className="w-5 h-5" />
-          <span>Export to Excel</span>
-        </motion.button>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setIsTeluguMode(!isTeluguMode)}
+            className="flex items-center space-x-2 bg-white border-2 border-teal-500 text-teal-700 px-4 py-2 rounded-lg font-semibold hover:bg-teal-50 transition-all"
+          >
+            <span>{isTeluguMode ? 'English' : 'తెలుగు'}</span>
+          </button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleExportToExcel}
+            className="flex items-center space-x-2 bg-gradient-to-r from-green-600 to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+          >
+            <Download className="w-5 h-5" />
+            <span>{isTeluguMode ? 'ఎక్సెల్‌కు ఎగుమతి చేయండి' : 'Export to Excel'}</span>
+          </motion.button>
+        </div>
       </div>
 
       {/* Date and Line Selector */}
@@ -182,7 +192,7 @@ export const OwnerDashboard: React.FC = () => {
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
           <div className="relative">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-blue-100 text-sm font-medium">Opening Balance</p>
+              <p className="text-blue-100 text-sm font-medium">{isTeluguMode ? teluguTranslations.openingBalance : 'Opening Balance'}</p>
               {!dailyAccount?.isLocked && !isEditingOpening && (
                 <button
                   onClick={() => setIsEditingOpening(true)}
@@ -209,7 +219,7 @@ export const OwnerDashboard: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <p className="text-3xl font-bold">₹{(dailyAccount?.openingBalance || 0).toLocaleString()}</p>
+              <p className="text-3xl font-bold">{isTeluguMode ? formatTeluguCurrency(dailyAccount?.openingBalance || 0) : `₹${(dailyAccount?.openingBalance || 0).toLocaleString()}`}</p>
             )}
           </div>
         </motion.div>
@@ -223,9 +233,9 @@ export const OwnerDashboard: React.FC = () => {
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
           <div className="relative">
-            <p className="text-green-100 text-sm font-medium mb-2">Collections</p>
-            <p className="text-3xl font-bold">₹{totalCollections.toLocaleString()}</p>
-            <p className="text-green-100 text-xs mt-2">{collections.length} payments</p>
+            <p className="text-green-100 text-sm font-medium mb-2">{isTeluguMode ? teluguTranslations.collections : 'Collections'}</p>
+            <p className="text-3xl font-bold">{isTeluguMode ? formatTeluguCurrency(totalCollections) : `₹${totalCollections.toLocaleString()}`}</p>
+            <p className="text-green-100 text-xs mt-2">{collections.length} {isTeluguMode ? 'చెల్లింపులు' : 'payments'}</p>
           </div>
         </motion.div>
 
@@ -238,9 +248,9 @@ export const OwnerDashboard: React.FC = () => {
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
           <div className="relative">
-            <p className="text-teal-100 text-sm font-medium mb-2">QR Payments</p>
-            <p className="text-3xl font-bold">₹{totalQRPayments.toLocaleString()}</p>
-            <p className="text-teal-100 text-xs mt-2">{qrPayments.length} transactions</p>
+            <p className="text-teal-100 text-sm font-medium mb-2">{isTeluguMode ? 'QR చెల్లింపులు' : 'QR Payments'}</p>
+            <p className="text-3xl font-bold">{isTeluguMode ? formatTeluguCurrency(totalQRPayments) : `₹${totalQRPayments.toLocaleString()}`}</p>
+            <p className="text-teal-100 text-xs mt-2">{qrPayments.length} {isTeluguMode ? 'లావాదేవీలు' : 'transactions'}</p>
           </div>
         </motion.div>
 
@@ -253,9 +263,9 @@ export const OwnerDashboard: React.FC = () => {
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
           <div className="relative">
-            <p className="text-red-100 text-sm font-medium mb-2">Expenses</p>
-            <p className="text-3xl font-bold">₹{totalExpenses.toLocaleString()}</p>
-            <p className="text-red-100 text-xs mt-2">{expenses.length} expenses</p>
+            <p className="text-red-100 text-sm font-medium mb-2">{isTeluguMode ? teluguTranslations.expenses : 'Expenses'}</p>
+            <p className="text-3xl font-bold">{isTeluguMode ? formatTeluguCurrency(totalExpenses) : `₹${totalExpenses.toLocaleString()}`}</p>
+            <p className="text-red-100 text-xs mt-2">{expenses.length} {isTeluguMode ? 'ఖర్చులు' : 'expenses'}</p>
           </div>
         </motion.div>
 
@@ -269,16 +279,16 @@ export const OwnerDashboard: React.FC = () => {
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
           <div className="relative">
             <p className="text-copper-100 text-sm font-medium mb-2 flex items-center">
-              Closing Balance
+              {isTeluguMode ? teluguTranslations.closingBalance : 'Closing Balance'}
               {netBalance >= 0 ? (
                 <TrendingUp className="w-4 h-4 ml-1" />
               ) : (
                 <TrendingDown className="w-4 h-4 ml-1" />
               )}
             </p>
-            <p className="text-3xl font-bold">₹{closingBalance.toLocaleString()}</p>
+            <p className="text-3xl font-bold">{isTeluguMode ? formatTeluguCurrency(closingBalance) : `₹${closingBalance.toLocaleString()}`}</p>
             <p className="text-copper-100 text-xs mt-2">
-              Net: {netBalance >= 0 ? '+' : ''}₹{netBalance.toLocaleString()}
+              {isTeluguMode ? 'నికర' : 'Net'}: {netBalance >= 0 ? '+' : ''}{isTeluguMode ? formatTeluguCurrency(Math.abs(netBalance)) : `₹${netBalance.toLocaleString()}`}
             </p>
           </div>
         </motion.div>

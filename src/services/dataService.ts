@@ -836,6 +836,22 @@ class DataService {
 
     if (error) throw error;
 
+    if (expense.lineId) {
+      const { data: lineData, error: lineError } = await supabase
+        .from('lines')
+        .select('current_balance')
+        .eq('id', expense.lineId)
+        .single();
+
+      if (!lineError && lineData) {
+        const newBalance = Number(lineData.current_balance) - Number(expense.amount);
+        await supabase
+          .from('lines')
+          .update({ current_balance: newBalance })
+          .eq('id', expense.lineId);
+      }
+    }
+
     return {
       id: data.id,
       lineId: data.line_id,
