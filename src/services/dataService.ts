@@ -591,6 +591,228 @@ class DataService {
     if (error) throw error;
   }
 
+  async getPenalties(lineId?: string, isPaid?: boolean): Promise<any[]> {
+    let query = supabase
+      .from('penalties')
+      .select(`
+        *,
+        loan:loans(*),
+        borrower:borrowers(*),
+        line:lines(*),
+        appliedBy:users!penalties_applied_by_fkey(*)
+      `)
+      .order('applied_at', { ascending: false });
+
+    if (lineId) {
+      query = query.eq('line_id', lineId);
+    }
+
+    if (isPaid !== undefined) {
+      query = query.eq('is_paid', isPaid);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map(p => ({
+      id: p.id,
+      loanId: p.loan_id,
+      borrowerId: p.borrower_id,
+      lineId: p.line_id,
+      penaltyType: p.penalty_type,
+      amount: Number(p.amount),
+      reason: p.reason,
+      appliedBy: p.applied_by,
+      appliedByName: p.appliedBy?.name || 'Unknown',
+      appliedAt: new Date(p.applied_at),
+      isPaid: p.is_paid,
+      paidAt: p.paid_at ? new Date(p.paid_at) : null,
+      paymentId: p.payment_id,
+      notes: p.notes,
+      borrowerName: p.borrower?.name || 'Unknown',
+      lineName: p.line?.name || 'Unknown'
+    }));
+  }
+
+  async createPenalty(penalty: {
+    loanId: string;
+    borrowerId: string;
+    lineId: string;
+    penaltyType: 'missed_payment' | 'late_payment' | 'custom';
+    amount: number;
+    reason: string;
+    notes?: string;
+  }): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('penalties')
+      .insert({
+        loan_id: penalty.loanId,
+        borrower_id: penalty.borrowerId,
+        line_id: penalty.lineId,
+        penalty_type: penalty.penaltyType,
+        amount: penalty.amount,
+        reason: penalty.reason,
+        applied_by: user?.id,
+        notes: penalty.notes
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      loanId: data.loan_id,
+      borrowerId: data.borrower_id,
+      lineId: data.line_id,
+      penaltyType: data.penalty_type,
+      amount: Number(data.amount),
+      reason: data.reason,
+      appliedBy: data.applied_by,
+      appliedAt: new Date(data.applied_at),
+      isPaid: data.is_paid,
+      notes: data.notes
+    };
+  }
+
+  async recordPenaltyPayment(penaltyId: string, amount: number, notes?: string): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data: penalty } = await supabase
+      .from('penalties')
+      .select('*')
+      .eq('id', penaltyId)
+      .single();
+
+    if (!penalty) throw new Error('Penalty not found');
+
+    const { data: payment, error: paymentError } = await supabase
+      .from('payments')
+      .insert({
+        loan_id: penalty.loan_id,
+        amount: amount,
+        payment_date: new Date().toISOString(),
+        collected_by: user?.id,
+        payment_type: 'penalty',
+        penalty_id: penaltyId,
+        notes: notes
+      })
+      .select()
+      .single();
+
+    if (paymentError) throw paymentError;
+
+    const { error: penaltyError } = await supabase
+      .from('penalties')
+      .update({
+        is_paid: true,
+        paid_at: new Date().toISOString(),
+        payment_id: payment.id
+      })
+      .eq('id', penaltyId);
+
+    if (penaltyError) throw penaltyError;
+
+    const { data: line } = await supabase
+      .from('lines')
+      .select('total_collected, current_balance')
+      .eq('id', penalty.line_id)
+      .single();
+
+    if (line) {
+      await supabase
+        .from('lines')
+        .update({
+          total_collected: Number(line.total_collected || 0) + amount,
+          current_balance: Number(line.current_balance || 0) + amount
+        })
+        .eq('id', penalty.line_id);
+    }
+
+    return payment;
+  }
+
+  async getMissedPayments(loanId?: string): Promise<any[]> {
+    let query = supabase
+      .from('missed_payments')
+      .select(`
+        *,
+        loan:loans(*),
+        borrower:borrowers(*),
+        markedBy:users!missed_payments_marked_by_fkey(*)
+      `)
+      .order('expected_date', { ascending: false });
+
+    if (loanId) {
+      query = query.eq('loan_id', loanId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map(m => ({
+      id: m.id,
+      loanId: m.loan_id,
+      borrowerId: m.borrower_id,
+      expectedDate: new Date(m.expected_date),
+      weekNumber: m.week_number,
+      amountExpected: Number(m.amount_expected),
+      markedBy: m.marked_by,
+      markedByName: m.markedBy?.name || 'Unknown',
+      markedAt: new Date(m.marked_at),
+      reason: m.reason,
+      paidLater: m.paid_later,
+      paidAt: m.paid_at ? new Date(m.paid_at) : null,
+      paymentId: m.payment_id,
+      notes: m.notes,
+      borrowerName: m.borrower?.name || 'Unknown'
+    }));
+  }
+
+  async markPaymentMissed(missedPayment: {
+    loanId: string;
+    borrowerId: string;
+    expectedDate: string;
+    weekNumber?: number;
+    amountExpected: number;
+    reason: string;
+    notes?: string;
+  }): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const { data, error } = await supabase
+      .from('missed_payments')
+      .insert({
+        loan_id: missedPayment.loanId,
+        borrower_id: missedPayment.borrowerId,
+        expected_date: missedPayment.expectedDate,
+        week_number: missedPayment.weekNumber,
+        amount_expected: missedPayment.amountExpected,
+        marked_by: user?.id,
+        reason: missedPayment.reason,
+        notes: missedPayment.notes
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      loanId: data.loan_id,
+      borrowerId: data.borrower_id,
+      expectedDate: new Date(data.expected_date),
+      weekNumber: data.week_number,
+      amountExpected: Number(data.amount_expected),
+      markedBy: data.marked_by,
+      markedAt: new Date(data.marked_at),
+      reason: data.reason,
+      notes: data.notes
+    };
+  }
+
   async getCommissions(): Promise<Commission[]> {
     const { data, error } = await supabase
       .from('commissions')
@@ -1085,28 +1307,71 @@ class DataService {
   }
 
   async getPaymentsByDate(date: string, lineId?: string): Promise<any[]> {
-    let query = supabase
-      .from('payments')
-      .select(`
-        *,
-        loan:loans(*),
-        borrower:borrowers(*),
-        agent:users!payments_collected_by_fkey(*)
-      `)
-      .gte('created_at', `${date}T00:00:00`)
-      .lte('created_at', `${date}T23:59:59`);
-
     if (lineId) {
-      query = query.eq('loan.line_id', lineId);
-    }
+      const { data: loans } = await supabase
+        .from('loans')
+        .select('id')
+        .eq('line_id', lineId);
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return (data || []).map(p => ({
-      ...p,
-      agentName: p.agent?.name,
-      borrowerName: p.borrower?.name
-    }));
+      const loanIds = loans?.map(l => l.id) || [];
+
+      if (loanIds.length === 0) {
+        return [];
+      }
+
+      const { data, error } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          loan:loans!inner(*, borrower:borrowers(*)),
+          agent:users!payments_collected_by_fkey(*)
+        `)
+        .in('loan_id', loanIds)
+        .gte('payment_date', `${date}T00:00:00`)
+        .lte('payment_date', `${date}T23:59:59`)
+        .order('payment_date', { ascending: false });
+
+      if (error) throw error;
+
+      return (data || []).map(p => ({
+        id: p.id,
+        amount: Number(p.amount),
+        paymentDate: p.payment_date,
+        paymentType: p.payment_type || 'regular',
+        loanId: p.loan_id,
+        borrowerName: p.loan?.borrower?.name || 'Unknown',
+        agentName: p.agent?.name || 'Unknown',
+        method: p.method || 'cash',
+        notes: p.notes,
+        penaltyId: p.penalty_id
+      }));
+    } else {
+      const { data, error } = await supabase
+        .from('payments')
+        .select(`
+          *,
+          loan:loans!inner(*, borrower:borrowers(*)),
+          agent:users!payments_collected_by_fkey(*)
+        `)
+        .gte('payment_date', `${date}T00:00:00`)
+        .lte('payment_date', `${date}T23:59:59`)
+        .order('payment_date', { ascending: false });
+
+      if (error) throw error;
+
+      return (data || []).map(p => ({
+        id: p.id,
+        amount: Number(p.amount),
+        paymentDate: p.payment_date,
+        paymentType: p.payment_type || 'regular',
+        loanId: p.loan_id,
+        borrowerName: p.loan?.borrower?.name || 'Unknown',
+        agentName: p.agent?.name || 'Unknown',
+        method: p.method || 'cash',
+        notes: p.notes,
+        penaltyId: p.penalty_id
+      }));
+    }
   }
 
   async getActiveCoOwnerSession(coOwnerId: string): Promise<any> {

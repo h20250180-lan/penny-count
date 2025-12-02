@@ -98,7 +98,9 @@ export const OwnerDashboard: React.FC = () => {
     }
   };
 
-  const totalCollections = collections.reduce((sum, c) => sum + c.amount, 0);
+  const regularCollections = collections.filter(c => c.paymentType === 'regular' || !c.paymentType).reduce((sum, c) => sum + c.amount, 0);
+  const penaltyCollections = collections.filter(c => c.paymentType === 'penalty').reduce((sum, c) => sum + c.amount, 0);
+  const totalCollections = regularCollections + penaltyCollections;
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
   const totalQRPayments = qrPayments.reduce((sum, q) => sum + q.amount, 0);
   const netBalance = totalCollections + totalQRPayments - totalExpenses;
@@ -235,7 +237,13 @@ export const OwnerDashboard: React.FC = () => {
           <div className="relative">
             <p className="text-green-100 text-sm font-medium mb-2">{isTeluguMode ? teluguTranslations.collections : 'Collections'}</p>
             <p className="text-3xl font-bold">{isTeluguMode ? formatTeluguCurrency(totalCollections) : `₹${totalCollections.toLocaleString()}`}</p>
-            <p className="text-green-100 text-xs mt-2">{collections.length} {isTeluguMode ? 'చెల్లింపులు' : 'payments'}</p>
+            <div className="mt-2 space-y-1">
+              <p className="text-green-100 text-xs">Regular: ₹{regularCollections.toLocaleString()}</p>
+              {penaltyCollections > 0 && (
+                <p className="text-green-100 text-xs">Penalties: ₹{penaltyCollections.toLocaleString()}</p>
+              )}
+              <p className="text-green-100 text-xs">{collections.length} {isTeluguMode ? 'చెల్లింపులు' : 'payments'}</p>
+            </div>
           </div>
         </motion.div>
 
