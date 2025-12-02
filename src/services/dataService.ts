@@ -167,6 +167,7 @@ class DataService {
 
     return (data || []).map(borrower => ({
       id: borrower.id,
+      serialNumber: borrower.serial_number,
       name: borrower.name,
       phone: borrower.phone,
       address: borrower.address,
@@ -188,11 +189,12 @@ class DataService {
     const { data, error } = await supabase
       .from('borrowers')
       .insert({
+        serial_number: borrower.serialNumber,
         name: borrower.name,
         phone: borrower.phone,
         address: borrower.address || '',
         line_id: borrower.lineId,
-        agent_id: user?.id
+        agent_id: borrower.agentId || user?.id
       })
       .select()
       .single();
@@ -201,6 +203,7 @@ class DataService {
 
     return {
       id: data.id,
+      serialNumber: data.serial_number,
       name: data.name,
       phone: data.phone,
       address: data.address,
@@ -218,6 +221,7 @@ class DataService {
 
   async updateBorrower(id: string, updates: Partial<Borrower>): Promise<Borrower> {
     const updateData: any = {};
+    if (updates.serialNumber !== undefined) updateData.serial_number = updates.serialNumber;
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.phone !== undefined) updateData.phone = updates.phone;
     if (updates.address !== undefined) updateData.address = updates.address;
@@ -235,6 +239,7 @@ class DataService {
 
     return {
       id: data.id,
+      serialNumber: data.serial_number,
       name: data.name,
       phone: data.phone,
       address: data.address,
@@ -1091,6 +1096,96 @@ class DataService {
   async exportDailyAccountToExcel(date: string, lineId?: string): Promise<string> {
     console.log('Exporting daily account to Excel for date:', date, 'line:', lineId);
     return '';
+  }
+
+  async bulkCreateBorrowers(borrowers: Partial<Borrower>[]): Promise<{ success: Borrower[], failed: { data: Partial<Borrower>, error: string }[] }> {
+    const results: Borrower[] = [];
+    const failures: { data: Partial<Borrower>, error: string }[] = [];
+
+    for (const borrower of borrowers) {
+      try {
+        const created = await this.createBorrower(borrower);
+        results.push(created);
+      } catch (error: any) {
+        failures.push({
+          data: borrower,
+          error: error.message || 'Unknown error'
+        });
+      }
+    }
+
+    return { success: results, failed: failures };
+  }
+
+  async checkDuplicateBorrower(phone: string, serialNumber?: string, lineId?: string): Promise<{ exists: boolean, borrower?: Borrower }> {
+    let query = supabase
+      .from('borrowers')
+      .select('*');
+
+    if (phone) {
+      query = query.eq('phone', phone);
+    }
+
+    const { data, error } = await query.maybeSingle();
+
+    if (error) throw error;
+
+    if (data) {
+      return {
+        exists: true,
+        borrower: {
+          id: data.id,
+          serialNumber: data.serial_number,
+          name: data.name,
+          phone: data.phone,
+          address: data.address,
+          geolocation: data.geolocation,
+          isHighRisk: data.is_high_risk,
+          isDefaulter: data.is_defaulter,
+          totalLoans: data.total_loans,
+          activeLoans: data.active_loans,
+          totalRepaid: Number(data.total_repaid),
+          lineId: data.line_id,
+          agentId: data.agent_id,
+          createdAt: new Date(data.created_at)
+        }
+      };
+    }
+
+    if (serialNumber && lineId) {
+      const { data: serialData, error: serialError } = await supabase
+        .from('borrowers')
+        .select('*')
+        .eq('line_id', lineId)
+        .eq('serial_number', serialNumber)
+        .maybeSingle();
+
+      if (serialError) throw serialError;
+
+      if (serialData) {
+        return {
+          exists: true,
+          borrower: {
+            id: serialData.id,
+            serialNumber: serialData.serial_number,
+            name: serialData.name,
+            phone: serialData.phone,
+            address: serialData.address,
+            geolocation: serialData.geolocation,
+            isHighRisk: serialData.is_high_risk,
+            isDefaulter: serialData.is_defaulter,
+            totalLoans: serialData.total_loans,
+            activeLoans: serialData.active_loans,
+            totalRepaid: Number(serialData.total_repaid),
+            lineId: serialData.line_id,
+            agentId: serialData.agent_id,
+            createdAt: new Date(serialData.created_at)
+          }
+        };
+      }
+    }
+
+    return { exists: false };
   }
 }
 

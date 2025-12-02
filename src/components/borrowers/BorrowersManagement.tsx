@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Users,
   UserX,
-  Wallet
+  Wallet,
+  Upload
 } from 'lucide-react';
 import { Borrower } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +25,7 @@ import { useLineContext } from '../../contexts/LineContext';
 import { dataService } from '../../services/dataService';
 import { Line } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
+import { BulkImport } from './BulkImport';
 
 // Removed mock data
 
@@ -42,6 +44,7 @@ export const BorrowersManagement: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [riskFilter, setRiskFilter] = useState<string>('all');
+  const [showBulkImport, setShowBulkImport] = useState(false);
 
   // Load data on component mount
   React.useEffect(() => {
@@ -70,7 +73,8 @@ export const BorrowersManagement: React.FC = () => {
 
     const matchesSearch = borrower.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          borrower.phone.includes(searchTerm) ||
-                         borrower.address.toLowerCase().includes(searchTerm.toLowerCase());
+                         borrower.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (borrower.serialNumber && borrower.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()));
 
     let matchesRisk = true;
     if (riskFilter === 'high-risk') matchesRisk = borrower.isHighRisk;
@@ -186,15 +190,26 @@ export const BorrowersManagement: React.FC = () => {
           </p>
         </div>
         {(user?.role === 'agent' || user?.role === 'owner' || user?.role === 'co-owner') && (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleCreateBorrower}
-            className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
-          >
-            <Plus className="w-5 h-5" />
-            <span>{t('addBorrower')}</span>
-          </motion.button>
+          <div className="flex gap-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowBulkImport(true)}
+              className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center space-x-2"
+            >
+              <Upload className="w-5 h-5" />
+              <span>Bulk Import</span>
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleCreateBorrower}
+              className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
+            >
+              <Plus className="w-5 h-5" />
+              <span>{t('addBorrower')}</span>
+            </motion.button>
+          </div>
         )}
       </motion.div>
 
@@ -329,7 +344,9 @@ export const BorrowersManagement: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">{borrower.name}</h3>
-                  <p className="text-sm text-gray-500">ID: {borrower.id}</p>
+                  <p className="text-sm text-gray-500">
+                    {borrower.serialNumber ? `Serial: ${borrower.serialNumber}` : `ID: ${borrower.id.substring(0, 8)}`}
+                  </p>
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
@@ -723,6 +740,24 @@ export const BorrowersManagement: React.FC = () => {
               )}
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* Bulk Import Modal */}
+      {showBulkImport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={() => {
+                setShowBulkImport(false);
+                loadBorrowers();
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold z-10"
+            >
+              ×
+            </button>
+            <BulkImport />
+          </div>
         </div>
       )}
     </div>

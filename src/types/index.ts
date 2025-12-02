@@ -31,6 +31,7 @@ export interface Line {
 export interface Borrower {
   id: string;
   lineId: string;
+  serialNumber?: string;
   name: string;
   phone: string;
   address: string;
@@ -46,6 +47,7 @@ export interface Borrower {
   totalRepaid: number;
   outstandingAmount: number;
   creditScore: number;
+  agentId?: string;
   createdAt: Date;
   lastPaymentDate?: Date;
 }
