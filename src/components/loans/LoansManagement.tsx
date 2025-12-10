@@ -217,10 +217,14 @@ export const LoansManagement: React.FC = () => {
         const newBorrowerName = formData.get('newBorrowerName') as string;
         const newBorrowerPhone = formData.get('newBorrowerPhone') as string;
         const newBorrowerAddress = formData.get('newBorrowerAddress') as string;
-        const lineId = formData.get('lineId') as string;
 
-        if (!newBorrowerName || !newBorrowerPhone || !lineId) {
+        if (!newBorrowerName || !newBorrowerPhone) {
           pushToast({ type: 'error', message: 'Please fill in all borrower details' });
+          return;
+        }
+
+        if (!selectedLine?.id) {
+          pushToast({ type: 'error', message: 'Please select a line first' });
           return;
         }
 
@@ -228,7 +232,7 @@ export const LoansManagement: React.FC = () => {
           name: newBorrowerName,
           phone: newBorrowerPhone,
           address: newBorrowerAddress || '',
-          lineId: lineId,
+          lineId: selectedLine.id,
           agentId: user!.id
         };
 
@@ -242,6 +246,11 @@ export const LoansManagement: React.FC = () => {
 
       if (!borrowerId) {
         pushToast({ type: 'error', message: 'Please select a borrower' });
+        return;
+      }
+
+      if (!selectedLine?.id) {
+        pushToast({ type: 'error', message: 'Please select a line first' });
         return;
       }
 
@@ -260,7 +269,7 @@ export const LoansManagement: React.FC = () => {
 
       const newLoan = {
         borrowerId,
-        lineId: selectedLine?.id,
+        lineId: selectedLine.id,
         agentId: user!.id,
         amount,
         interestRate: monthlyInterestRate,
