@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp, TrendingDown, IndianRupee, Calendar, Download,
-  MapPin, Users, Activity, Lock, Unlock, Edit2, Save, X
+  MapPin, Users, Activity, Lock, Unlock, Edit2, Save, X, DollarSign
 } from 'lucide-react';
 import { DailyAccount, Line, Expense, QRPayment } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -344,7 +344,7 @@ export const OwnerDashboard: React.FC = () => {
               {collections.map((collection, index) => (
                 <tr key={index} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 text-sm text-gray-600">
-                    {new Date(collection.receivedAt).toLocaleTimeString()}
+                    {new Date(collection.paymentDate).toLocaleTimeString()}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">{collection.agentName}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">{collection.borrowerName}</td>

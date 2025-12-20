@@ -77,15 +77,18 @@ export interface Loan {
 export interface Payment {
   id: string;
   loanId: string;
-  borrowerId: string;
-  agentId: string;
+  borrowerId?: string;
+  agentId?: string;
+  collectedBy?: string;
   amount: number;
-  method: 'cash' | 'upi' | 'phonepe' | 'qr' | 'other';
+  method?: 'cash' | 'upi' | 'phonepe' | 'qr' | 'bank_transfer' | 'other';
   transactionId?: string;
-  receivedAt: Date;
+  paymentDate: Date;
+  receivedAt?: Date;
   syncedAt?: Date;
-  isOffline: boolean;
+  isOffline?: boolean;
   notes?: string;
+  createdAt: Date;
 }
 
 export interface Fine {

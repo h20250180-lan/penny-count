@@ -1268,7 +1268,8 @@ class DataService {
       .select(`
         *,
         category:expense_categories(*),
-        submittedByUser:users!expenses_submitted_by_fkey(*)
+        submittedByUser:users!expenses_submitted_by_fkey(*),
+        approvedByUser:users!expenses_approved_by_fkey(*)
       `)
       .eq('expense_date', date);
 
@@ -1278,7 +1279,27 @@ class DataService {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data || [];
+
+    return (data || []).map(exp => ({
+      id: exp.id,
+      lineId: exp.line_id,
+      categoryId: exp.category_id,
+      category: exp.category,
+      amount: Number(exp.amount),
+      expenseDate: new Date(exp.expense_date),
+      description: exp.description,
+      receiptUrl: exp.receipt_url,
+      paymentMethod: exp.payment_method,
+      submittedBy: exp.submitted_by,
+      submittedByUser: exp.submittedByUser,
+      approvedBy: exp.approved_by,
+      approvedByUser: exp.approvedByUser,
+      status: exp.status,
+      rejectionReason: exp.rejection_reason,
+      approvedAt: exp.approved_at ? new Date(exp.approved_at) : undefined,
+      paidAt: exp.paid_at ? new Date(exp.paid_at) : undefined,
+      createdAt: new Date(exp.created_at)
+    }));
   }
 
   async createExpense(expense: any): Promise<any> {

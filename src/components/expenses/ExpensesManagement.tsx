@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   IndianRupee, Plus, Calendar, Filter, CheckCircle, XCircle, Clock,
   Receipt, Trash2, Edit2, Search, TrendingUp, PieChart, Download,
-  FileText, Image as ImageIcon, X
+  FileText, Image as ImageIcon, X, DollarSign
 } from 'lucide-react';
 import { Expense, ExpenseCategory, Line } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -99,6 +99,7 @@ export const ExpensesManagement: React.FC = () => {
 
   const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
   const approvedExpenses = expenses.filter(e => e.status === 'approved').length;
+  const paidExpenses = expenses.filter(e => e.status === 'paid' || (e.status === 'approved' && e.paidAt)).length;
 
   const categoryTotals = categories.map(cat => ({
     category: cat.name,
