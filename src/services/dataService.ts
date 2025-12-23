@@ -9,7 +9,12 @@ class DataService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return (data || []).map(user => ({
+      ...user,
+      isActive: user.is_active,
+      addedBy: user.added_by,
+      createdAt: user.created_at
+    }));
   }
 
   async getUserById(id: string): Promise<User> {
@@ -25,15 +30,27 @@ class DataService {
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.phone !== undefined) updateData.phone = updates.phone;
+    if (updates.role !== undefined) updateData.role = updates.role;
+    if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
+    if (updates.addedBy !== undefined) updateData.added_by = updates.addedBy;
+
     const { data, error } = await supabase
       .from('users')
-      .update(updates)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    return {
+      ...data,
+      isActive: data.is_active,
+      addedBy: data.added_by
+    };
   }
 
   async deleteUser(id: string): Promise<void> {

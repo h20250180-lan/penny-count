@@ -9,6 +9,7 @@ export interface User {
   createdAt?: Date | string;
   isActive: boolean;
   assignedLines?: string[];
+  addedBy?: string;
 }
 
 export interface Line {

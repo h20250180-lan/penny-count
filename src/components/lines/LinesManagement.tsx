@@ -75,9 +75,11 @@ export const LinesManagement: React.FC = () => {
     }
   };
 
-  const filteredLines = user?.role === 'co-owner' 
+  const filteredLines = user?.role === 'co-owner'
     ? lines.filter(line => line.coOwnerId === user.id)
-    : lines;
+    : user?.role === 'owner'
+    ? lines.filter(line => line.ownerId === user.id)
+    : lines.filter(line => line.agentId === user.id);
 
   const getCoOwnerName = (coOwnerId?: string) => {
     const coOwner = users.find(u => u.id === coOwnerId);

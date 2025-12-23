@@ -56,9 +56,10 @@ export const UsersManagement: React.FC = () => {
     setError(null);
     try {
       const usersData = await dataService.getUsers();
-      // Filter to show only agents and co-owners for the owner
+      // Filter to show only agents and co-owners added by this owner
       const filtered = usersData.filter((u: User) =>
-        u.role === 'agent' || u.role === 'co-owner'
+        (u.role === 'agent' || u.role === 'co-owner') &&
+        u.addedBy === currentUser.id
       );
       setUsers(filtered);
     } catch (error: any) {
@@ -112,8 +113,11 @@ export const UsersManagement: React.FC = () => {
     setError(null);
 
     try {
-      // Just confirm the user is active
-      await dataService.updateUser(searchedUser.id, { isActive: true });
+      // Set the user's added_by to current owner and activate
+      await dataService.updateUser(searchedUser.id, {
+        isActive: true,
+        addedBy: currentUser?.id
+      });
       setSuccess(`${searchedUser.name} added to your team successfully!`);
       await loadUsers();
       setTimeout(() => {
@@ -141,7 +145,8 @@ export const UsersManagement: React.FC = () => {
           data: {
             name: newUserData.name,
             role: newUserData.role,
-            phone: newUserData.phone
+            phone: newUserData.phone,
+            addedBy: currentUser?.id
           }
         }
       });
