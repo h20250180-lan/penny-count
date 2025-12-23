@@ -80,16 +80,15 @@ export const UsersManagement: React.FC = () => {
     setLoading(true);
 
     try {
-      // Search in all users (need to query Supabase directly to see all users, not just team)
-      const { data: allUsersData, error: searchError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('phone', phoneSearch)
-        .maybeSingle();
+      // Use secure function to search across all users (bypasses RLS)
+      const { data: searchResults, error: searchError } = await supabase
+        .rpc('search_user_by_phone', { search_phone: phoneSearch });
 
       if (searchError) throw searchError;
 
-      if (allUsersData) {
+      // Check if any user was found
+      if (searchResults && searchResults.length > 0) {
+        const allUsersData = searchResults[0];
         const found: User = {
           ...allUsersData,
           isActive: allUsersData.is_active,
@@ -173,13 +172,31 @@ export const UsersManagement: React.FC = () => {
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Check for duplicate phone error
+        if (authError.message?.includes('already registered') ||
+            authError.message?.includes('already exists') ||
+            authError.message?.includes('duplicate')) {
+          setError('This phone number is already registered. Please search for the existing user instead.');
+        } else {
+          setError(authError.message || 'Error creating user');
+        }
+        return;
+      }
 
       // Show OTP form
       setShowOTPForm(true);
       setSuccess('OTP sent to ' + newUserData.phone);
     } catch (error: any) {
-      setError(error.message || 'Error creating user');
+      // Check for duplicate phone error
+      if (error.message?.includes('already registered') ||
+          error.message?.includes('already exists') ||
+          error.message?.includes('duplicate') ||
+          error.code === '23505') {
+        setError('This phone number is already registered. Please search for the existing user instead.');
+      } else {
+        setError(error.message || 'Error creating user');
+      }
     } finally {
       setLoading(false);
     }
