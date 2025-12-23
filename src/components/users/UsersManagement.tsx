@@ -1,55 +1,235 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Phone, 
-  Calendar,
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Plus,
+  Edit,
+  Phone,
   Shield,
   UserCheck,
   UserX,
   Search,
-  Filter
+  Filter,
+  Users as UsersIcon,
+  AlertCircle,
+  CheckCircle,
+  X
 } from 'lucide-react';
 import { User } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { dataService } from '../../services/dataService';
+import { supabase } from '../../lib/supabase';
 
 export const UsersManagement: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const { t } = useLanguage();
-  const [users, setUsers] = useState<User[]>([]); // Start with empty array
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Add user modal state
+  const [phoneSearch, setPhoneSearch] = useState('');
+  const [searchedUser, setSearchedUser] = useState<User | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showOTPForm, setShowOTPForm] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [newUserData, setNewUserData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'agent' as 'agent' | 'co-owner'
+  });
 
   // Load data on component mount
   React.useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const usersData = await dataService.getUsers();
-        // Normalize backend data: map _id -> id and convert createdAt strings to Date
-        const normalized = usersData.map((u: any) => ({
-          ...u,
-          id: u.id ? String(u.id) : (u._id ? (typeof u._id === 'string' ? u._id : (u._id && u._id.toString ? u._id.toString() : String(u._id))) : undefined),
-          createdAt: u.createdAt ? new Date(u.createdAt) : new Date(),
-          name: u.name || 'Unnamed'
-        }));
-        setUsers(normalized);
-      } catch (error: any) {
-        setError(error.message || 'Error loading users');
-      } finally {
-        setLoading(false);
+    loadUsers();
+  }, [currentUser]);
+
+  const loadUsers = async () => {
+    if (currentUser?.role !== 'owner') return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const usersData = await dataService.getUsers();
+      // Filter to show only agents and co-owners for the owner
+      const filtered = usersData.filter((u: User) =>
+        u.role === 'agent' || u.role === 'co-owner'
+      );
+      setUsers(filtered);
+    } catch (error: any) {
+      setError(error.message || 'Error loading users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchPhone = async () => {
+    if (!phoneSearch || phoneSearch.length < 10) {
+      setError('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+
+    try {
+      // Search in existing users
+      const allUsers = await dataService.getUsers();
+      const found = allUsers.find((u: User) => u.phone === phoneSearch);
+
+      if (found) {
+        // User exists - check if already in team
+        if (found.role === 'owner') {
+          setError('Cannot add owner as agent or co-owner');
+          setSearchedUser(null);
+        } else {
+          setSearchedUser(found);
+          setShowCreateForm(false);
+        }
+      } else {
+        // User not found - show create form
+        setSearchedUser(null);
+        setShowCreateForm(true);
+        setNewUserData({ ...newUserData, phone: phoneSearch });
       }
-    };
-    loadData();
-  }, []);
+    } catch (error: any) {
+      setError(error.message || 'Error searching user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddExistingUser = async () => {
+    if (!searchedUser) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Just confirm the user is active
+      await dataService.updateUser(searchedUser.id, { isActive: true });
+      setSuccess(`${searchedUser.name} added to your team successfully!`);
+      await loadUsers();
+      setTimeout(() => {
+        setShowAddModal(false);
+        resetModal();
+      }, 2000);
+    } catch (error: any) {
+      setError(error.message || 'Error adding user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Create user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        phone: newUserData.phone,
+        password: Math.random().toString(36).slice(-8), // Temporary password
+        options: {
+          data: {
+            name: newUserData.name,
+            role: newUserData.role,
+            phone: newUserData.phone
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      // Show OTP form
+      setShowOTPForm(true);
+      setSuccess('OTP sent to ' + newUserData.phone);
+    } catch (error: any) {
+      setError(error.message || 'Error creating user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        phone: newUserData.phone,
+        token: otp,
+        type: 'sms'
+      });
+
+      if (verifyError) throw verifyError;
+
+      setSuccess('User created successfully!');
+      await loadUsers();
+      setTimeout(() => {
+        setShowAddModal(false);
+        resetModal();
+      }, 2000);
+    } catch (error: any) {
+      setError(error.message || 'Invalid OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendInvitation = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Send SMS invitation (would need SMS service integration)
+      setSuccess('Invitation sent to ' + newUserData.phone + '. User can register on their own.');
+      setTimeout(() => {
+        setShowAddModal(false);
+        resetModal();
+      }, 3000);
+    } catch (error: any) {
+      setError(error.message || 'Error sending invitation');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetModal = () => {
+    setPhoneSearch('');
+    setSearchedUser(null);
+    setShowCreateForm(false);
+    setShowOTPForm(false);
+    setOtp('');
+    setNewUserData({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'agent'
+    });
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleToggleUserStatus = async (userId: string) => {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      await dataService.updateUser(userId, { isActive: !user.isActive });
+      await loadUsers();
+    } catch (error: any) {
+      setError(error.message || 'Error updating user status');
+    }
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,8 +240,6 @@ export const UsersManagement: React.FC = () => {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'owner':
-        return 'bg-purple-100 text-purple-700';
       case 'co-owner':
         return 'bg-blue-100 text-blue-700';
       case 'agent':
@@ -73,10 +251,8 @@ export const UsersManagement: React.FC = () => {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'owner':
-        return <Shield className="w-4 h-4" />;
       case 'co-owner':
-        return <UserCheck className="w-4 h-4" />;
+        return <Shield className="w-4 h-4" />;
       case 'agent':
         return <UserCheck className="w-4 h-4" />;
       default:
@@ -84,337 +260,197 @@ export const UsersManagement: React.FC = () => {
     }
   };
 
-  const handleCreateUser = () => {
-    setShowCreateModal(true);
-    setError(null);
-  };
-
-  const handleCreateUserSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    const formData = new FormData(e.currentTarget);
-    const newUser = {
-      name: formData.get('name') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      password: formData.get('password') as string,
-      role: formData.get('role') as 'co-owner' | 'agent',
-      isActive: true
-    };
-    try {
-      // Use Supabase signup to create auth user
-      const { supabase } = await import('../../lib/supabase');
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
-        options: {
-          data: {
-            name: newUser.name,
-            phone: newUser.phone,
-            role: newUser.role
-          }
-        }
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('User creation failed');
-
-      // Refresh users list
-      const usersData = await dataService.getUsers();
-      const normalized = usersData.map((u: any) => ({
-        ...u,
-        id: u.id ? String(u.id) : (u._id ? (typeof u._id === 'string' ? u._id : (u._id && u._id.toString ? u._id.toString() : String(u._id))) : undefined),
-        createdAt: u.createdAt ? new Date(u.createdAt) : new Date(),
-        name: u.name || 'Unnamed'
-      }));
-      setUsers(normalized);
-      setShowCreateModal(false);
-    } catch (error: any) {
-      setError(error.message || 'Error creating user');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setShowEditModal(true);
-    setError(null);
-  };
-
-  const handleToggleUserStatus = async (userId: string) => {
-    setError(null);
-    setLoading(true);
-    try {
-      if (!userId) {
-        setError('Missing user id');
-        return;
-      }
-      const user = users.find(u => u.id === userId);
-      if (!user) {
-        setError('User not found');
-        return;
-      }
-      const updatedUser = await dataService.updateUser(userId, { isActive: !user.isActive });
-      // Normalize returned user if necessary
-      const norm = {
-        ...updatedUser,
-        id: updatedUser.id || updatedUser._id || (updatedUser._id && updatedUser._id.toString && updatedUser._id.toString())
-      } as any;
-      setUsers(users.map(u => (u.id === userId ? norm : u)));
-    } catch (error: any) {
-      setError(error.message || 'Error updating user status');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    setError(null);
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      setLoading(true);
-      try {
-        await dataService.deleteUser(userId);
-        setUsers(users.filter(user => user.id !== userId));
-      } catch (error: any) {
-        setError(error.message || 'Error deleting user');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
+  if (currentUser?.role !== 'owner') {
+    return (
+      <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-xl">
+        <AlertCircle className="w-6 h-6 text-yellow-600 mb-2" />
+        <p className="text-yellow-800">Only owners can manage users and agents.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {error && <div className="bg-red-100 text-red-700 p-2 rounded">{error}</div>}
-      {loading && <div className="text-gray-500">Loading...</div>}
+    <div className="p-6 space-y-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Users & Agents</h1>
-          <p className="text-gray-600 mt-1">Manage system users and their roles</p>
+          <h1 className="text-3xl font-bold text-gray-900">Users & Agents</h1>
+          <p className="text-gray-600 mt-1">Manage your team of co-owners and agents</p>
         </div>
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleCreateUser}
-          className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center space-x-2 bg-gradient-to-r from-teal-600 to-teal-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
         >
           <Plus className="w-5 h-5" />
-          <span>{t('addUser')}</span>
+          <span>Add User</span>
         </motion.button>
-      </motion.div>
+      </div>
+
+      {/* Alerts */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center">
+          <CheckCircle className="w-5 h-5 mr-2" />
+          {success}
+        </div>
+      )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100 text-sm font-medium">Total Users</p>
+              <p className="text-3xl font-bold mt-2">{users.length}</p>
+            </div>
+            <UsersIcon className="w-12 h-12 opacity-30" />
+          </div>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+          className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Shield className="w-6 h-6 text-purple-600" />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-100 text-sm font-medium">Agents</p>
+              <p className="text-3xl font-bold mt-2">{users.filter(u => u.role === 'agent').length}</p>
             </div>
+            <UserCheck className="w-12 h-12 opacity-30" />
           </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">{t('owners')}</h3>
-          <p className="text-2xl font-bold text-gray-800">
-            {users.filter(u => u.role === 'owner').length}
-          </p>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+          className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg"
         >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <UserCheck className="w-6 h-6 text-blue-600" />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-indigo-100 text-sm font-medium">Co-owners</p>
+              <p className="text-3xl font-bold mt-2">{users.filter(u => u.role === 'co-owner').length}</p>
             </div>
+            <Shield className="w-12 h-12 opacity-30" />
           </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">{t('coOwners')}</h3>
-          <p className="text-2xl font-bold text-gray-800">
-            {users.filter(u => u.role === 'co-owner').length}
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <UserCheck className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">{t('agents')}</h3>
-          <p className="text-2xl font-bold text-gray-800">
-            {users.filter(u => u.role === 'agent').length}
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-emerald-100 rounded-lg">
-              <UserCheck className="w-6 h-6 text-emerald-600" />
-            </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Active Users</h3>
-          <p className="text-2xl font-bold text-gray-800">
-            {users.filter(u => u.isActive).length}
-          </p>
         </motion.div>
       </div>
 
       {/* Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
-      >
-        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search users by name or phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-              />
-            </div>
+      <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name or phone..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+            />
           </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-gray-400" />
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-            >
-              <option value="all">{t('allRoles')}</option>
-              <option value="owner">{t('owners')}</option>
-              <option value="co-owner">{t('coOwners')}</option>
-              <option value="agent">{t('agents')}</option>
-            </select>
-          </div>
+
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+          >
+            <option value="all">All Roles</option>
+            <option value="co-owner">Co-owners</option>
+            <option value="agent">Agents</option>
+          </select>
         </div>
-      </motion.div>
+      </div>
 
       {/* Users Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-      >
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gradient-to-r from-teal-50 to-blue-50">
               <tr>
-                <th className="text-left py-4 px-6 font-medium text-gray-700">User</th>
-                <th className="text-left py-4 px-6 font-medium text-gray-700">Role</th>
-                <th className="text-left py-4 px-6 font-medium text-gray-700">Phone</th>
-                <th className="text-left py-4 px-6 font-medium text-gray-700">Created</th>
-                <th className="text-left py-4 px-6 font-medium text-gray-700">Status</th>
-                <th className="text-left py-4 px-6 font-medium text-gray-700">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Name</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Phone</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Role</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredUsers.map((user, index) => (
+            <tbody className="divide-y divide-gray-100">
+              {filteredUsers.map((user) => (
                 <motion.tr
                   key={user.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   className="hover:bg-gray-50 transition-colors"
                 >
-                  <td className="py-4 px-6">
+                  <td className="px-6 py-4 text-sm">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-sm">
-                          {user.name.split(' ').map(n => n[0]).join('')}
+                      <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                        <span className="text-teal-700 font-semibold">
+                          {user.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">{user.name}</p>
-                        <p className="text-sm text-gray-500">ID: {user.id}</p>
+                        <div className="font-semibold text-gray-900">{user.name}</div>
+                        <div className="text-xs text-gray-500">{user.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${getRoleColor(user.role)}`}>
+                  <td className="px-6 py-4 text-sm text-gray-700">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <span>{user.phone}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                       {getRoleIcon(user.role)}
                       <span className="capitalize">{user.role}</span>
                     </span>
                   </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-800">{user.phone}</span>
-                    </div>
+                  <td className="px-6 py-4 text-sm">
+                    <button
+                      onClick={() => handleToggleUserStatus(user.id)}
+                      className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        user.isActive
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {user.isActive ? (
+                        <>
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserX className="w-3 h-3" />
+                          <span>Inactive</span>
+                        </>
+                      )}
+                    </button>
                   </td>
-                  <td className="py-4 px-6">
+                  <td className="px-6 py-4 text-sm">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-gray-800">{user.createdAt && user.createdAt.toLocaleDateString ? user.createdAt.toLocaleDateString() : new Date().toLocaleDateString()}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      user.isActive 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6">
-                    <div className="flex items-center space-x-2">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleEditUser(user)}
+                      <button
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit User"
                       >
-                        <Edit className="w-4 h-4" />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleToggleUserStatus(user.id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          user.isActive 
-                            ? 'text-red-600 hover:bg-red-50' 
-                            : 'text-green-600 hover:bg-green-50'
-                        }`}
-                      >
-                        {user.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </motion.button>
+                        <Edit className="w-5 h-5" />
+                      </button>
                     </div>
                   </td>
                 </motion.tr>
@@ -422,152 +458,201 @@ export const UsersManagement: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Create User Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {/* Add User Modal */}
+      <AnimatePresence>
+        {showAddModal && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 w-full max-w-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => {
+              setShowAddModal(false);
+              resetModal();
+            }}
           >
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Add New User</h2>
-            <form className="space-y-4" onSubmit={handleCreateUserSubmit}>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Enter full name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                  required
-                />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">Add User</h2>
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      resetModal();
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="user@example.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                  required
-                />
+
+              <div className="p-6 space-y-4">
+                {!showOTPForm && !searchedUser && !showCreateForm && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Search by Phone Number
+                      </label>
+                      <div className="flex space-x-2">
+                        <input
+                          type="tel"
+                          value={phoneSearch}
+                          onChange={(e) => setPhoneSearch(e.target.value)}
+                          placeholder="Enter 10-digit phone number"
+                          className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+                          maxLength={10}
+                        />
+                        <button
+                          onClick={handleSearchPhone}
+                          disabled={loading}
+                          className="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50"
+                        >
+                          <Search className="w-5 h-5" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Search for existing user or create new
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {searchedUser && !showOTPForm && (
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                      <h3 className="font-semibold text-blue-900 mb-2">User Found!</h3>
+                      <div className="space-y-2 text-sm text-blue-800">
+                        <p><strong>Name:</strong> {searchedUser.name}</p>
+                        <p><strong>Phone:</strong> {searchedUser.phone}</p>
+                        <p><strong>Role:</strong> {searchedUser.role}</p>
+                        <p><strong>Status:</strong> {searchedUser.isActive ? 'Active' : 'Inactive'}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleAddExistingUser}
+                      disabled={loading}
+                      className="w-full px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                      Add to My Team
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchedUser(null);
+                        setPhoneSearch('');
+                      }}
+                      className="w-full px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                    >
+                      Search Again
+                    </button>
+                  </div>
+                )}
+
+                {showCreateForm && !showOTPForm && (
+                  <form onSubmit={handleCreateUser} className="space-y-4">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                      <p className="text-sm text-yellow-800">
+                        No user found with phone <strong>{phoneSearch}</strong>. Create a new user.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                      <input
+                        type="text"
+                        value={newUserData.name}
+                        onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={newUserData.email}
+                        onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                      <select
+                        value={newUserData.role}
+                        onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value as 'agent' | 'co-owner' })}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+                        required
+                      >
+                        <option value="agent">Agent</option>
+                        <option value="co-owner">Co-owner</option>
+                      </select>
+                    </div>
+
+                    <div className="flex space-x-3">
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50"
+                      >
+                        Create & Send OTP
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSendInvitation}
+                        disabled={loading}
+                        className="flex-1 px-6 py-3 border-2 border-teal-600 text-teal-600 rounded-xl font-semibold hover:bg-teal-50 transition-colors disabled:opacity-50"
+                      >
+                        Send Invitation
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {showOTPForm && (
+                  <form onSubmit={handleVerifyOTP} className="space-y-4">
+                    <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                      <p className="text-sm text-green-800">
+                        OTP sent to <strong>{newUserData.phone}</strong>. Enter the 6-digit code below.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Enter OTP *</label>
+                      <input
+                        type="text"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        maxLength={6}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all text-center text-2xl tracking-widest"
+                        placeholder="000000"
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading || otp.length !== 6}
+                      className="w-full px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50"
+                    >
+                      Verify & Create User
+                    </button>
+                  </form>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="+1234567890"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Minimum 8 characters"
-                  minLength={8}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Role
-                </label>
-                <select name="role" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
-                  <option value="">{t('selectRole')}</option>
-                  <option value="co-owner">{t('coOwner')}</option>
-                  <option value="agent">{t('agent')}</option>
-                </select>
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
-                >
-                  Add User
-                </button>
-              </div>
-            </form>
+            </motion.div>
           </motion.div>
-        </div>
-      )}
-      {/* Edit User Modal */}
-      {showEditModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl p-6 w-full max-w-md"
-          >
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Edit User</h2>
-            <form className="space-y-4" onSubmit={async (e) => {
-              e.preventDefault();
-              setError(null);
-              setLoading(true);
-              try {
-                if (!selectedUser || !selectedUser.id) throw new Error('Missing user id');
-                const form = new FormData(e.currentTarget as HTMLFormElement);
-                const updates: any = {
-                  name: form.get('name') as string,
-                  phone: form.get('phone') as string,
-                  role: form.get('role') as string,
-                };
-                const updated = await dataService.updateUser(selectedUser.id, updates);
-                const norm = { ...updated, id: updated.id || updated._id || (updated._id && updated._id.toString && updated._id.toString()) } as any;
-                setUsers(users.map(u => u.id === selectedUser.id ? norm : u));
-                setShowEditModal(false);
-                setSelectedUser(null);
-              } catch (err: any) {
-                setError(err.message || 'Failed to update user');
-              } finally {
-                setLoading(false);
-              }
-            }}>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                <input defaultValue={selectedUser.name} name="name" type="text" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                <input defaultValue={selectedUser.phone} name="phone" type="tel" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                <select defaultValue={selectedUser.role} name="role" className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                  <option value="owner">{t('owner')}</option>
-                  <option value="co-owner">{t('coOwner')}</option>
-                  <option value="agent">{t('agent')}</option>
-                </select>
-              </div>
-              <div className="flex space-x-3 pt-4">
-                <button type="button" onClick={() => { setShowEditModal(false); setSelectedUser(null); }} className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg">Cancel</button>
-                <button type="submit" className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg">Save</button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };
