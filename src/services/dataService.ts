@@ -1230,8 +1230,8 @@ class DataService {
     }));
   }
 
-  async getExpenses(): Promise<any[]> {
-    const { data, error } = await supabase
+  async getExpenses(agentId?: string): Promise<any[]> {
+    let query = supabase
       .from('expenses')
       .select(`
         *,
@@ -1241,19 +1241,28 @@ class DataService {
       `)
       .order('expense_date', { ascending: false });
 
+    if (agentId) {
+      query = query.eq('submitted_by', agentId);
+    }
+
+    const { data, error } = await query;
+
     if (error) throw error;
 
     return (data || []).map(exp => ({
       id: exp.id,
       lineId: exp.line_id,
       categoryId: exp.category_id,
+      category: exp.category,
       amount: Number(exp.amount),
       expenseDate: new Date(exp.expense_date),
       description: exp.description,
       receiptUrl: exp.receipt_url,
       paymentMethod: exp.payment_method,
       submittedBy: exp.submitted_by,
+      submittedByUser: exp.submittedByUser,
       approvedBy: exp.approved_by,
+      approvedByUser: exp.approvedByUser,
       status: exp.status,
       rejectionReason: exp.rejection_reason,
       approvedAt: exp.approved_at ? new Date(exp.approved_at) : undefined,

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   IndianRupee, Plus, Calendar, Filter, CheckCircle, XCircle, Clock,
   Receipt, Trash2, Edit2, Search, TrendingUp, PieChart, Download,
-  FileText, Image as ImageIcon, X, DollarSign
+  FileText, Image as ImageIcon, X, DollarSign, Users
 } from 'lucide-react';
 import { Expense, ExpenseCategory, Line } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -18,10 +18,11 @@ export const ExpensesManagement: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
+  const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [selectedAgent, setSelectedAgent] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -33,24 +34,30 @@ export const ExpensesManagement: React.FC = () => {
     expenseDate: new Date().toISOString().split('T')[0],
     description: '',
     paymentMethod: 'cash' as 'cash' | 'digital' | 'bank_transfer' | 'upi',
-    receiptUrl: ''
+    receiptUrl: '',
+    submittedBy: ''
   });
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     try {
       setLoading(true);
-      const [expensesData, categoriesData, linesData] = await Promise.all([
-        dataService.getExpenses(),
+      const agentIdFilter = user?.role === 'agent' ? user.id : undefined;
+      const [expensesData, categoriesData, linesData, usersData] = await Promise.all([
+        dataService.getExpenses(agentIdFilter),
         dataService.getExpenseCategories(),
-        dataService.getLines()
+        dataService.getLines(),
+        user?.role === 'owner' ? dataService.getUsers() : Promise.resolve([])
       ]);
       setExpenses(expensesData);
       setCategories(categoriesData);
       setLines(linesData);
+      if (user?.role === 'owner') {
+        setAgents(usersData.filter((u: any) => u.role === 'agent' || u.role === 'co-owner'));
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -61,11 +68,15 @@ export const ExpensesManagement: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const submittedBy = user?.role === 'owner' && formData.submittedBy
+        ? formData.submittedBy
+        : user?.id || '';
+
       await dataService.createExpense({
         ...formData,
         lineId: selectedLine ? selectedLine.id : formData.lineId,
         amount: parseFloat(formData.amount),
-        submittedBy: user?.id || ''
+        submittedBy
       });
       setShowAddModal(false);
       setFormData({
@@ -75,7 +86,8 @@ export const ExpensesManagement: React.FC = () => {
         expenseDate: new Date().toISOString().split('T')[0],
         description: '',
         paymentMethod: 'cash',
-        receiptUrl: ''
+        receiptUrl: '',
+        submittedBy: ''
       });
       loadData();
     } catch (error) {
@@ -86,20 +98,27 @@ export const ExpensesManagement: React.FC = () => {
 
 
   const filteredExpenses = expenses.filter(expense => {
-    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || expense.status === filterStatus;
+    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         expense.submittedByUser?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesAgent = selectedAgent === 'all' || expense.submittedBy === selectedAgent;
     const matchesCategory = selectedCategory === 'all' || expense.categoryId === selectedCategory;
     const expenseDate = new Date(expense.expenseDate);
     const matchesDateRange =
       (!startDate || expenseDate >= new Date(startDate)) &&
       (!endDate || expenseDate <= new Date(endDate));
 
-    return matchesSearch && matchesStatus && matchesCategory && matchesDateRange;
+    return matchesSearch && matchesAgent && matchesCategory && matchesDateRange;
   });
 
   const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const approvedExpenses = expenses.filter(e => e.status === 'approved').length;
-  const paidExpenses = expenses.filter(e => e.status === 'paid' || (e.status === 'approved' && e.paidAt)).length;
+  const expenseCount = filteredExpenses.length;
+
+  const agentExpenseTotals = agents.map(agent => ({
+    agentName: agent.name,
+    total: expenses
+      .filter(e => e.submittedBy === agent.id)
+      .reduce((sum, e) => sum + e.amount, 0)
+  })).sort((a, b) => b.total - a.total);
 
   const categoryTotals = categories.map(cat => ({
     category: cat.name,
@@ -113,8 +132,8 @@ export const ExpensesManagement: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-teal-900">{t('expenseManagement')}</h1>
-          <p className="text-gray-600 mt-1">{t('expenseManagement')}</p>
+          <h1 className="text-3xl font-bold text-teal-900">Agent Expenses</h1>
+          <p className="text-gray-600 mt-1">Track and manage agent operational expenses (food, fuel, hotel, etc.)</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -123,21 +142,22 @@ export const ExpensesManagement: React.FC = () => {
           className="flex items-center space-x-2 bg-gradient-to-r from-copper-500 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
         >
           <Plus className="w-5 h-5" />
-          <span>{t('recordExpense')}</span>
+          <span>Record Expense</span>
         </motion.button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl p-6 text-white shadow-lg"
+          className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white shadow-lg"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-teal-100 text-sm font-medium">{t('totalExpenses')}</p>
+              <p className="text-red-100 text-sm font-medium">Total Expenses</p>
               <p className="text-3xl font-bold mt-2">₹{totalExpenses.toLocaleString()}</p>
+              <p className="text-red-100 text-xs mt-2">{expenseCount} expenses recorded</p>
             </div>
             <DollarSign className="w-12 h-12 opacity-30" />
           </div>
@@ -147,14 +167,15 @@ export const ExpensesManagement: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg"
+          className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white shadow-lg"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium">{t('paidExpenses')}</p>
-              <p className="text-3xl font-bold mt-2">{paidExpenses}</p>
+              <p className="text-orange-100 text-sm font-medium">Categories</p>
+              <p className="text-3xl font-bold mt-2">{categories.filter(c => c.isActive).length}</p>
+              <p className="text-orange-100 text-xs mt-2">Active categories</p>
             </div>
-            <DollarSign className="w-12 h-12 opacity-30" />
+            <PieChart className="w-12 h-12 opacity-30" />
           </div>
         </motion.div>
 
@@ -162,62 +183,82 @@ export const ExpensesManagement: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm font-medium">{t('approvedExpenses')}</p>
-              <p className="text-3xl font-bold mt-2">{approvedExpenses}</p>
-            </div>
-            <CheckCircle className="w-12 h-12 opacity-30" />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
           className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white shadow-lg"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium">{t('category')}</p>
-              <p className="text-3xl font-bold mt-2">{categories.length}</p>
+              <p className="text-blue-100 text-sm font-medium">{user?.role === 'owner' ? 'Active Agents' : 'My Expenses'}</p>
+              <p className="text-3xl font-bold mt-2">{user?.role === 'owner' ? agents.length : expenseCount}</p>
             </div>
-            <PieChart className="w-12 h-12 opacity-30" />
+            {user?.role === 'owner' ? <Users className="w-12 h-12 opacity-30" /> : <Receipt className="w-12 h-12 opacity-30" />}
           </div>
         </motion.div>
       </div>
 
-      {/* Top Categories */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
-      >
-        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
-          <TrendingUp className="w-6 h-6 mr-2 text-copper-500" />
-          {t('categoryBreakdown')}
-        </h2>
-        <div className="space-y-3">
-          {categoryTotals.slice(0, 5).map((item, index) => (
-            <div key={index} className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700">{item.category}</span>
-                  <span className="text-sm font-bold text-gray-900">₹{item.total.toLocaleString()}</span>
+      {/* Expense Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Agent Breakdown (Owner only) */}
+        {user?.role === 'owner' && agentExpenseTotals.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
+          >
+            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+              <Users className="w-6 h-6 mr-2 text-blue-600" />
+              Expense by Agent
+            </h2>
+            <div className="space-y-3">
+              {agentExpenseTotals.slice(0, 5).map((item, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-medium text-gray-700">{item.agentName}</span>
+                      <span className="text-sm font-bold text-gray-900">₹{item.total.toLocaleString()}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all"
+                        style={{ width: `${totalExpenses > 0 ? (item.total / totalExpenses) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-copper-500 to-orange-500 h-2 rounded-full transition-all"
-                    style={{ width: `${(item.total / totalExpenses) * 100}%` }}
-                  />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Category Breakdown */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100"
+        >
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <TrendingUp className="w-6 h-6 mr-2 text-copper-500" />
+            Category Breakdown
+          </h2>
+          <div className="space-y-3">
+            {categoryTotals.slice(0, 5).map((item, index) => (
+              <div key={index} className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-700">{item.category}</span>
+                    <span className="text-sm font-bold text-gray-900">₹{item.total.toLocaleString()}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-gradient-to-r from-copper-500 to-orange-500 h-2 rounded-full transition-all"
+                      style={{ width: `${totalExpenses > 0 ? (item.total / totalExpenses) * 100 : 0}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </div>
 
       {/* Filters */}
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
@@ -226,31 +267,33 @@ export const ExpensesManagement: React.FC = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder={t('searchPlaceholder')}
+              placeholder="Search by description or agent..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
             />
           </div>
 
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
-            className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
-          >
-            <option value="all">{t('all')} {t('status')}</option>
-            <option value="pending">{t('pending')}</option>
-            <option value="approved">{t('approvedExpenses')}</option>
-            <option value="rejected">{t('rejected')}</option>
-          </select>
+          {user?.role === 'owner' && (
+            <select
+              value={selectedAgent}
+              onChange={(e) => setSelectedAgent(e.target.value)}
+              className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+            >
+              <option value="all">All Agents</option>
+              {agents.map(agent => (
+                <option key={agent.id} value={agent.id}>{agent.name}</option>
+              ))}
+            </select>
+          )}
 
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
           >
-            <option value="all">{t('all')} {t('category')}</option>
-            {categories.map(cat => (
+            <option value="all">All Categories</option>
+            {categories.filter(c => c.isActive).map(cat => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
@@ -277,15 +320,17 @@ export const ExpensesManagement: React.FC = () => {
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-teal-50 to-copper-50">
+            <thead className="bg-gradient-to-r from-red-50 to-orange-50">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('date')}</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('category')}</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('description')}</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('amount')}</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('paymentMethod')}</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('status')}</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">{t('actions')}</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Date</th>
+                {user?.role === 'owner' && (
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Agent</th>
+                )}
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Category</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Description</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Amount</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Payment Method</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -301,54 +346,44 @@ export const ExpensesManagement: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {new Date(expense.expenseDate).toLocaleDateString()}
                     </td>
+                    {user?.role === 'owner' && (
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-700 font-semibold text-xs">
+                              {expense.submittedByUser?.name?.charAt(0) || '?'}
+                            </span>
+                          </div>
+                          <span className="font-medium text-gray-900">{expense.submittedByUser?.name || 'Unknown'}</span>
+                        </div>
+                      </td>
+                    )}
                     <td className="px-6 py-4 text-sm">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-                        {category?.name}
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        {category?.name || 'Unknown'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">{expense.description}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                    <td className="px-6 py-4 text-sm font-semibold text-red-600">
                       ₹{expense.amount.toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600 capitalize">
                       {expense.paymentMethod.replace('_', ' ')}
                     </td>
                     <td className="px-6 py-4 text-sm">
-                      {expense.status === 'pending' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                          <Clock className="w-3 h-3 mr-1" />
-                          Pending
-                        </span>
+                      {expense.receiptUrl ? (
+                        <a
+                          href={expense.receiptUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-1 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors font-medium"
+                        >
+                          <Receipt className="w-4 h-4 mr-1" />
+                          View
+                        </a>
+                      ) : (
+                        <span className="text-gray-400 text-xs">No receipt</span>
                       )}
-                      {expense.status === 'approved' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Approved
-                        </span>
-                      )}
-                      {expense.status === 'rejected' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          <XCircle className="w-3 h-3 mr-1" />
-                          Rejected
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        {user?.role !== 'agent' && expense.status === 'approved' && (null
-                        )}
-                        {expense.receiptUrl && (
-                          <a
-                            href={expense.receiptUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                            title="View Receipt"
-                          >
-                            <Receipt className="w-5 h-5" />
-                          </a>
-                        )}
-                      </div>
                     </td>
                   </motion.tr>
                 );
@@ -407,6 +442,26 @@ export const ExpensesManagement: React.FC = () => {
                           <option key={line.id} value={line.id}>{line.name}</option>
                         ))}
                       </select>
+                    </div>
+                  )}
+
+                  {user?.role === 'owner' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Agent/Co-owner *</label>
+                      <select
+                        value={formData.submittedBy}
+                        onChange={(e) => setFormData({ ...formData, submittedBy: e.target.value })}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
+                        required
+                      >
+                        <option value="">Select Agent/Co-owner</option>
+                        {agents.map(agent => (
+                          <option key={agent.id} value={agent.id}>
+                            {agent.name} ({agent.role})
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">Who incurred this expense?</p>
                     </div>
                   )}
 
