@@ -72,11 +72,16 @@ export const ExpensesManagement: React.FC = () => {
         ? formData.submittedBy
         : user?.id || '';
 
+      const submittedByUser = user?.role === 'owner' && formData.submittedBy
+        ? agents.find(a => a.id === formData.submittedBy)
+        : user;
+
       await dataService.createExpense({
         ...formData,
         lineId: selectedLine ? selectedLine.id : formData.lineId,
         amount: parseFloat(formData.amount),
-        submittedBy
+        submittedBy,
+        addedByRole: submittedByUser?.role || user?.role
       });
       setShowAddModal(false);
       setFormData({
@@ -348,13 +353,22 @@ export const ExpensesManagement: React.FC = () => {
                     </td>
                     {user?.role === 'owner' && (
                       <td className="px-6 py-4 text-sm">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-700 font-semibold text-xs">
-                              {expense.submittedByUser?.name?.charAt(0) || '?'}
-                            </span>
+                        <div className="flex flex-col">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <span className="text-blue-700 font-semibold text-xs">
+                                {expense.submittedByUser?.name?.charAt(0) || '?'}
+                              </span>
+                            </div>
+                            <span className="font-medium text-gray-900">{expense.submittedByUser?.name || 'Unknown'}</span>
                           </div>
-                          <span className="font-medium text-gray-900">{expense.submittedByUser?.name || 'Unknown'}</span>
+                          {expense.addedByRole && (
+                            <span className="text-xs text-gray-500 mt-1 ml-10">
+                              Added by: {expense.addedByRole === 'owner' ? `Owner (${expense.submittedByUser?.name})` :
+                                        expense.addedByRole === 'co-owner' ? `Co-owner (${expense.submittedByUser?.name})` :
+                                        `Agent`}
+                            </span>
+                          )}
                         </div>
                       </td>
                     )}

@@ -173,6 +173,7 @@ export interface Expense {
   paymentMethod: 'cash' | 'digital' | 'bank_transfer' | 'upi';
   submittedBy: string;
   submittedByUser?: User;
+  addedByRole?: 'owner' | 'co-owner' | 'agent';
   approvedBy?: string;
   approvedByUser?: User;
   status: 'pending' | 'approved' | 'rejected' | 'paid';
