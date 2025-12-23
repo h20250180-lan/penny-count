@@ -72,16 +72,12 @@ export const ExpensesManagement: React.FC = () => {
         ? formData.submittedBy
         : user?.id || '';
 
-      const submittedByUser = user?.role === 'owner' && formData.submittedBy
-        ? agents.find(a => a.id === formData.submittedBy)
-        : user;
-
       await dataService.createExpense({
         ...formData,
         lineId: selectedLine ? selectedLine.id : formData.lineId,
         amount: parseFloat(formData.amount),
         submittedBy,
-        addedByRole: submittedByUser?.role || user?.role
+        addedByRole: user?.role
       });
       setShowAddModal(false);
       setFormData({
@@ -364,9 +360,9 @@ export const ExpensesManagement: React.FC = () => {
                           </div>
                           {expense.addedByRole && (
                             <span className="text-xs text-gray-500 mt-1 ml-10">
-                              Added by: {expense.addedByRole === 'owner' ? `Owner (${expense.submittedByUser?.name})` :
-                                        expense.addedByRole === 'co-owner' ? `Co-owner (${expense.submittedByUser?.name})` :
-                                        `Agent`}
+                              Added by: {expense.addedByRole === 'owner' ? 'Owner' :
+                                        expense.addedByRole === 'co-owner' ? 'Co-owner' :
+                                        'Agent'}
                             </span>
                           )}
                         </div>
