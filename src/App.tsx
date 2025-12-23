@@ -22,7 +22,6 @@ import { Settings } from './components/settings/Settings';
 import { AgentLocationMap } from './components/location/AgentLocationMap';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { ExpensesManagement } from './components/expenses/ExpensesManagement';
-import { OwnerDashboard } from './components/owner/OwnerDashboard';
 import { DailyMonitoring } from './components/daily-monitoring/DailyMonitoring';
 
 const AppContent: React.FC = () => {
@@ -71,8 +70,6 @@ const AppContent: React.FC = () => {
         return t('agentLocations');
       case 'expenses':
         return t('expenseManagement');
-      case 'owner-monitoring':
-        return t('dailyMonitoring');
       case 'daily-monitoring':
         return 'Daily Monitoring';
       case 'settings':
@@ -108,8 +105,6 @@ const AppContent: React.FC = () => {
         return <AgentLocationMap />;
       case 'expenses':
         return <ExpensesManagement />;
-      case 'owner-monitoring':
-        return <OwnerDashboard />;
       case 'daily-monitoring':
         return <DailyMonitoring />;
       case 'settings':

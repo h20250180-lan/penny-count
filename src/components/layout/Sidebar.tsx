@@ -31,8 +31,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
   if (role === 'owner') {
     return [
       ...baseItems,
-      { id: 'owner-monitoring', label: t('dailyMonitoring'), icon: BarChart3 },
-      { id: 'daily-monitoring', label: 'Balance Sheet', icon: Calendar },
+      { id: 'daily-monitoring', label: 'Daily Monitoring', icon: Calendar },
       { id: 'lines', label: t('linesManagement'), icon: Building2 },
       { id: 'users', label: t('usersAgents'), icon: Users },
       { id: 'locations', label: t('agentLocations'), icon: MapPin },
