@@ -12,7 +12,8 @@ import {
   Wallet,
   MapPin,
   Receipt,
-  BarChart3
+  BarChart3,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -31,6 +32,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
     return [
       ...baseItems,
       { id: 'owner-monitoring', label: t('dailyMonitoring'), icon: BarChart3 },
+      { id: 'daily-monitoring', label: 'Balance Sheet', icon: Calendar },
       { id: 'lines', label: t('linesManagement'), icon: Building2 },
       { id: 'users', label: t('usersAgents'), icon: Users },
       { id: 'locations', label: t('agentLocations'), icon: MapPin },

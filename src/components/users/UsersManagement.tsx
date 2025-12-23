@@ -80,19 +80,41 @@ export const UsersManagement: React.FC = () => {
     setLoading(true);
 
     try {
-      // Search in existing users
-      const allUsers = await dataService.getUsers();
-      const found = allUsers.find((u: User) => u.phone === phoneSearch);
+      // Search in all users (need to query Supabase directly to see all users, not just team)
+      const { data: allUsersData, error: searchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phoneSearch)
+        .maybeSingle();
 
-      if (found) {
-        // User exists - check if already in team
+      if (searchError) throw searchError;
+
+      if (allUsersData) {
+        const found: User = {
+          ...allUsersData,
+          isActive: allUsersData.is_active,
+          addedBy: allUsersData.added_by,
+          createdAt: allUsersData.created_at
+        };
+
+        // Check if user is owner
         if (found.role === 'owner') {
           setError('Cannot add owner as agent or co-owner');
           setSearchedUser(null);
-        } else {
-          setSearchedUser(found);
-          setShowCreateForm(false);
+          return;
         }
+
+        // Check if already in team
+        if (found.addedBy === currentUser?.id) {
+          setSuccess('This user is already in your team!');
+          setSearchedUser(null);
+          setShowCreateForm(false);
+          return;
+        }
+
+        // User exists but not in team
+        setSearchedUser(found);
+        setShowCreateForm(false);
       } else {
         // User not found - show create form
         setSearchedUser(null);

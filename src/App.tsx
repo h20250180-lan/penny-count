@@ -23,6 +23,7 @@ import { AgentLocationMap } from './components/location/AgentLocationMap';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { ExpensesManagement } from './components/expenses/ExpensesManagement';
 import { OwnerDashboard } from './components/owner/OwnerDashboard';
+import { DailyMonitoring } from './components/daily-monitoring/DailyMonitoring';
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -72,6 +73,8 @@ const AppContent: React.FC = () => {
         return t('expenseManagement');
       case 'owner-monitoring':
         return t('dailyMonitoring');
+      case 'daily-monitoring':
+        return 'Daily Monitoring';
       case 'settings':
         return t('settings');
       default:
@@ -107,6 +110,8 @@ const AppContent: React.FC = () => {
         return <ExpensesManagement />;
       case 'owner-monitoring':
         return <OwnerDashboard />;
+      case 'daily-monitoring':
+        return <DailyMonitoring />;
       case 'settings':
         return <Settings />;
       default:
