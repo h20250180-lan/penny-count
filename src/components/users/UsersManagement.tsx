@@ -540,6 +540,20 @@ export const UsersManagement: React.FC = () => {
               </div>
 
               <div className="p-6 space-y-4">
+                {/* Error and Success Messages - Inside Modal */}
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center">
+                    <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0" />
+                    <span className="text-sm">{error}</span>
+                  </div>
+                )}
+                {success && (
+                  <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-2 flex-shrink-0" />
+                    <span className="text-sm">{success}</span>
+                  </div>
+                )}
+
                 {!showOTPForm && !searchedUser && !showCreateForm && (
                   <div className="space-y-4">
                     <div>
@@ -550,7 +564,16 @@ export const UsersManagement: React.FC = () => {
                         <input
                           type="tel"
                           value={phoneSearch}
-                          onChange={(e) => setPhoneSearch(e.target.value)}
+                          onChange={(e) => {
+                            setPhoneSearch(e.target.value);
+                            setError(null);
+                            setSuccess(null);
+                          }}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter' && phoneSearch.length >= 10) {
+                              handleSearchPhone();
+                            }
+                          }}
                           placeholder="Enter 10-digit phone number"
                           className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all"
                           maxLength={10}
@@ -558,9 +581,13 @@ export const UsersManagement: React.FC = () => {
                         <button
                           onClick={handleSearchPhone}
                           disabled={loading}
-                          className="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50"
+                          className="px-6 py-3 bg-teal-600 text-white rounded-xl font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Search className="w-5 h-5" />
+                          {loading ? (
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Search className="w-5 h-5" />
+                          )}
                         </button>
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
