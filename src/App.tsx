@@ -23,12 +23,16 @@ import { AgentLocationMap } from './components/location/AgentLocationMap';
 import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { ExpensesManagement } from './components/expenses/ExpensesManagement';
 import { DailyMonitoring } from './components/daily-monitoring/DailyMonitoring';
+import { ResetPassword } from './components/auth/ResetPassword';
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Check if we're on the password reset page
+  const isResetPasswordPage = window.location.pathname === '/reset-password' || window.location.hash.includes('type=recovery');
 
   if (isLoading) {
     return (
@@ -39,6 +43,11 @@ const AppContent: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // Handle password reset page
+  if (isResetPasswordPage) {
+    return <ResetPassword />;
   }
 
   if (!user) {

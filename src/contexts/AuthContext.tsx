@@ -89,8 +89,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (userData: { name: string; email: string; phone: string; password: string; role: string }) => {
+    // Validate password length
     if (userData.password.length < 8) {
       setSignupError('Password must be at least 8 characters long.');
+      return false;
+    }
+
+    // Validate phone number - must be exactly 10 digits
+    const cleanedPhone = userData.phone.replace(/[^0-9]/g, '');
+    if (!cleanedPhone || cleanedPhone.length !== 10) {
+      setSignupError('Please enter a valid 10-digit phone number.');
       return false;
     }
 
@@ -100,13 +108,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Attempting signup for:', userData.email);
 
+      // Check if email already exists
+      const { data: existingEmail } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', userData.email)
+        .maybeSingle();
+
+      if (existingEmail) {
+        setSignupError('This email is already registered. Please use a different email or login.');
+        setIsLoading(false);
+        return false;
+      }
+
+      // Check if phone already exists
+      const { data: existingPhone } = await supabase
+        .from('users')
+        .select('phone')
+        .eq('phone', cleanedPhone)
+        .maybeSingle();
+
+      if (existingPhone) {
+        setSignupError('This phone number is already registered. Please use a different number.');
+        setIsLoading(false);
+        return false;
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
           data: {
             name: userData.name,
-            phone: userData.phone,
+            phone: cleanedPhone,
             role: userData.role
           }
         }
@@ -131,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             id: authData.user.id,
             name: userData.name,
             email: userData.email,
-            phone: userData.phone,
+            phone: cleanedPhone,
             role: userData.role,
             is_active: true,
             assigned_lines: []
@@ -139,7 +173,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (profileError) {
           console.error('Profile creation error:', profileError);
-          throw profileError;
+
+          // Handle specific duplicate errors
+          if (profileError.message.includes('users_phone_key')) {
+            setSignupError('This phone number is already registered.');
+          } else if (profileError.message.includes('users_email_key')) {
+            setSignupError('This email is already registered.');
+          } else {
+            setSignupError(profileError.message);
+          }
+
+          setIsLoading(false);
+          return false;
         }
 
         console.log('Signup successful');
@@ -152,9 +197,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       console.error('Signup caught error:', err);
       let msg = err?.message || 'Sign up failed.';
+
+      // Handle duplicate errors
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
-        msg = 'Email already exists.';
+        msg = 'Email or phone number already registered.';
+      } else if (msg.includes('users_phone_key')) {
+        msg = 'This phone number is already registered.';
+      } else if (msg.includes('users_email_key')) {
+        msg = 'This email is already registered.';
+      } else if (msg.includes('users_phone_check')) {
+        msg = 'Please enter a valid 10-digit phone number.';
       }
+
       setSignupError(msg);
       setIsLoading(false);
       return false;

@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Loader, Mail, Lock, User, Phone, Briefcase, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 export const LoginForm: React.FC = () => {
-  const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const [tab, setTab] = useState<'login' | 'signup' | 'forgot'>('login');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [name, setName] = useState('');
@@ -14,6 +15,8 @@ export const LoginForm: React.FC = () => {
   const [role, setRole] = useState('agent');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
 
   const { login, signup, loginError, signupError } = useAuth();
 
@@ -50,14 +53,54 @@ export const LoginForm: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setSuccess('');
+
+    // Validate phone number on client side
+    const cleanedPhone = phone.replace(/[^0-9]/g, '');
+    if (!cleanedPhone || cleanedPhone.length !== 10) {
+      setError('Please enter a valid 10-digit phone number');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const success = await signup({ name, email, phone, password, role });
+      const success = await signup({ name, email, phone: cleanedPhone, password, role });
       if (!success) {
         setError(signupError || 'Signup failed');
+      } else {
+        setSuccess('Account created successfully! Logging you in...');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1500);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
       console.error('Signup error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      setSuccess('Password reset link sent! Check your email.');
+      setTimeout(() => {
+        setTab('login');
+        setResetEmail('');
+      }, 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
     } finally {
       setIsLoading(false);
     }
@@ -151,8 +194,8 @@ export const LoginForm: React.FC = () => {
             {/* Tabs */}
             <div className="flex gap-2 mb-8 bg-gray-100 rounded-2xl p-1.5">
               <button
-                onClick={() => setTab('login')}
-                className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                onClick={() => { setTab('login'); setError(''); setSuccess(''); }}
+                className={`flex-1 py-3 px-4 sm:px-6 rounded-xl font-semibold transition-all duration-300 text-sm sm:text-base ${
                   tab === 'login'
                     ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-lg shadow-teal-500/30'
                     : 'text-gray-600 hover:text-gray-900'
@@ -161,8 +204,8 @@ export const LoginForm: React.FC = () => {
                 Sign In
               </button>
               <button
-                onClick={() => setTab('signup')}
-                className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                onClick={() => { setTab('signup'); setError(''); setSuccess(''); }}
+                className={`flex-1 py-3 px-4 sm:px-6 rounded-xl font-semibold transition-all duration-300 text-sm sm:text-base ${
                   tab === 'signup'
                     ? 'bg-gradient-to-r from-copper-500 to-orange-500 text-white shadow-lg shadow-copper-500/30'
                     : 'text-gray-600 hover:text-gray-900'
@@ -181,6 +224,18 @@ export const LoginForm: React.FC = () => {
               >
                 <Shield className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <span>{error}</span>
+              </motion.div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-600 text-sm flex items-start space-x-2"
+              >
+                <Shield className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <span>{success}</span>
               </motion.div>
             )}
 
@@ -238,6 +293,16 @@ export const LoginForm: React.FC = () => {
                     </>
                   )}
                 </motion.button>
+
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => { setTab('forgot'); setError(''); setSuccess(''); }}
+                    className="text-teal-600 hover:text-teal-700 text-sm font-medium transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
               </motion.form>
             )}
 
@@ -280,18 +345,27 @@ export const LoginForm: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone (10 digits)</label>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="tel"
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        if (value.length <= 10) {
+                          setPhone(value);
+                        }
+                      }}
                       className="w-full pl-12 pr-4 py-3.5 border-2 border-gray-200 rounded-xl focus:border-copper-500 focus:ring-4 focus:ring-copper-100 outline-none transition-all"
-                      placeholder="+1 234 567 8900"
+                      placeholder="9876543210"
+                      maxLength={10}
                       required
                     />
                   </div>
+                  {phone && phone.length !== 10 && (
+                    <p className="text-xs text-red-500 mt-1">Phone must be exactly 10 digits</p>
+                  )}
                 </div>
 
                 <div>
@@ -342,6 +416,63 @@ export const LoginForm: React.FC = () => {
                     </>
                   )}
                 </motion.button>
+              </motion.form>
+            )}
+
+            {/* Forgot Password Form */}
+            {tab === 'forgot' && (
+              <motion.form
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                onSubmit={handleForgotPassword}
+                className="space-y-5"
+              >
+                <div className="text-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-800">Reset Password</h3>
+                  <p className="text-sm text-gray-600 mt-2">Enter your email to receive a password reset link</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                      placeholder="your@email.com"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <motion.button
+                  type="submit"
+                  disabled={isLoading}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 rounded-xl font-semibold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <Loader className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <span>Send Reset Link</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </motion.button>
+
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => { setTab('login'); setError(''); setSuccess(''); }}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
               </motion.form>
             )}
           </div>
