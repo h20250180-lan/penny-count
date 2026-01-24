@@ -180,23 +180,23 @@ export const LinesManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {error && <div className="bg-red-100 text-red-700 p-2 rounded">{error}</div>}
       {loading && <div className="text-gray-500">Loading lines...</div>}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-gray-800">Lines</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Lines</h1>
         {(user?.role === 'owner' || user?.role === 'co-owner') && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+            className="flex items-center justify-center bg-emerald-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors text-sm sm:text-base w-full sm:w-auto"
           >
-            <Plus className="w-5 h-5 mr-2" /> {t('addNewLine')}
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> {t('addNewLine')}
           </button>
         )}
       </div>
 
       {/* Lines Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 w-full">
         {filteredLines.map((line, index) => (
           <motion.div
             key={line.id}

@@ -428,12 +428,12 @@ export const LoansManagement: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">{getTitle()}</h1>
-          <p className="text-gray-600 mt-1">
-            {user?.role === 'agent' 
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{getTitle()}</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            {user?.role === 'agent'
               ? 'Manage loan disbursements and track repayments'
               : 'Monitor loan performance across all lines'
             }
@@ -444,9 +444,9 @@ export const LoansManagement: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleCreateLoan}
-            className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
+            className="bg-emerald-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2 text-sm sm:text-base w-full sm:w-auto justify-center"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>New Loan</span>
           </motion.button>
         )}

@@ -96,21 +96,21 @@ export const Commissions: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {error && <div className="bg-red-100 text-red-700 p-2 rounded">{error}</div>}
       {loading && <div className="text-gray-500">Loading commissions...</div>}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-gray-800">Commissions</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Commissions</h1>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+          className="flex items-center justify-center bg-emerald-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors text-sm sm:text-base w-full sm:w-auto"
         >
-          <DollarSign className="w-5 h-5 mr-2" /> Add New Commission
+          <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> Add New Commission
         </button>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

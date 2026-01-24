@@ -178,35 +178,35 @@ export const BorrowersManagement: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">{getTitle()}</h1>
-          <p className="text-gray-600 mt-1">
-            {user?.role === 'agent' 
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{getTitle()}</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            {user?.role === 'agent'
               ? 'Manage your assigned borrowers and their loans'
               : 'Monitor borrower information and loan performance'
             }
           </p>
         </div>
         {(user?.role === 'agent' || user?.role === 'owner' || user?.role === 'co-owner') && (
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3 flex-wrap">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowBulkImport(true)}
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center space-x-2"
+              className="bg-blue-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center space-x-2 text-sm sm:text-base"
             >
-              <Upload className="w-5 h-5" />
+              <Upload className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Bulk Import</span>
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleCreateBorrower}
-              className="bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2"
+              className="bg-emerald-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center space-x-2 text-sm sm:text-base"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>{t('addBorrower')}</span>
             </motion.button>
           </div>

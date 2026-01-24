@@ -566,21 +566,21 @@ export const Settings: React.FC = () => {
   if (!profile) return <div className="text-gray-500">No profile data found. Please log in to view and edit your profile.</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden p-4 sm:p-0">
       {error && (
         <div className="w-full mb-4">
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 text-yellow-700 flex items-center justify-between">
-            <div>Live profile fetch failed: {error}. Showing cached profile if available.</div>
-            <div className="space-x-2">
-              <button onClick={() => loadProfile()} className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded">Retry</button>
-              <button onClick={() => { localStorage.removeItem('penny-count-token'); window.location.href = '/login'; }} className="px-3 py-1 bg-red-100 text-red-700 rounded">Re-login</button>
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 text-yellow-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="text-sm sm:text-base">Live profile fetch failed: {error}. Showing cached profile if available.</div>
+            <div className="flex gap-2 flex-wrap">
+              <button onClick={() => loadProfile()} className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded text-sm sm:text-base">Retry</button>
+              <button onClick={() => { localStorage.removeItem('penny-count-token'); window.location.href = '/login'; }} className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm sm:text-base">Re-login</button>
             </div>
           </div>
         </div>
       )}
 
       {/* Settings Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
         {/* Sidebar */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
