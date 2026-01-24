@@ -173,7 +173,7 @@ export const BorrowersManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -323,7 +323,7 @@ export const BorrowersManagement: React.FC = () => {
       </motion.div>
 
       {/* Borrowers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full">
         {filteredBorrowers.map((borrower, index) => (
           <motion.div
             key={borrower.id}

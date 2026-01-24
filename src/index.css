@@ -7,12 +7,22 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     touch-action: manipulation;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   body {
     overscroll-behavior-y: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+
+  #root {
+    overflow-x: hidden;
+    width: 100%;
   }
 
   * {
@@ -62,5 +72,20 @@
 
   .safe-right {
     padding-right: env(safe-area-inset-right);
+  }
+
+  .no-horizontal-scroll {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+}
+
+@layer components {
+  .responsive-table-wrapper {
+    @apply overflow-x-auto w-full -mx-4 px-4 sm:mx-0 sm:px-0;
+  }
+
+  .responsive-grid {
+    @apply w-full max-w-full overflow-x-hidden;
   }
 }

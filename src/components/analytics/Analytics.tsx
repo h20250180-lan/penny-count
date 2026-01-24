@@ -72,7 +72,7 @@ export const Analytics: React.FC = () => {
   if (!analytics) return <div className="text-gray-500">No analytics data available.</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -106,7 +106,7 @@ export const Analytics: React.FC = () => {
       </motion.div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -177,7 +177,7 @@ export const Analytics: React.FC = () => {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full">
         {/* Monthly Trends */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -312,8 +312,10 @@ export const Analytics: React.FC = () => {
       >
         <h3 className="text-lg font-semibold text-gray-800 mb-6">Line Performance</h3>
         
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle">
+            <div className="overflow-hidden">
+              <table className="min-w-full w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left py-3 px-4 font-medium text-gray-700">Line</th>
@@ -374,7 +376,9 @@ export const Analytics: React.FC = () => {
                 </motion.tr>
               ))}
             </tbody>
-          </table>
+              </table>
+            </div>
+          </div>
         </div>
       </motion.div>
 

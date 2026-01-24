@@ -423,7 +423,7 @@ export const LoansManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -453,7 +453,7 @@ export const LoansManagement: React.FC = () => {
       </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -592,8 +592,10 @@ export const LoansManagement: React.FC = () => {
             )}
           </div>
         ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <div className="inline-block min-w-full align-middle">
+            <div className="overflow-hidden">
+          <table className="min-w-full w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left py-4 px-6 font-medium text-gray-700">Loan ID</th>
@@ -698,6 +700,8 @@ export const LoansManagement: React.FC = () => {
               ))}
             </tbody>
           </table>
+            </div>
+          </div>
         </div>
         )}
       </motion.div>

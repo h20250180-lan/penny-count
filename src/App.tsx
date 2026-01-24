@@ -116,10 +116,10 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50/20 via-white to-teal-50/30 flex relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50/20 via-white to-teal-50/30 flex relative overflow-x-hidden w-full">
       {/* Background decorative elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-200/20 to-transparent rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-teal-200/20 to-transparent rounded-full blur-3xl" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-200/20 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-teal-200/20 to-transparent rounded-full blur-3xl pointer-events-none" />
 
       {/* Sidebar */}
       <Sidebar
@@ -130,15 +130,15 @@ const AppContent: React.FC = () => {
       />
 
       {/* Main Content */}
-      <div className="relative z-10 flex-1 flex flex-col min-w-0 w-full">
+      <div className="relative z-10 flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
         <TopBar
           title={getSectionTitle()}
           onMenuClick={() => setSidebarOpen(true)}
         />
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-4 sm:p-5 lg:p-6 xl:p-8 max-w-[100vw]">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
+          <div className="p-4 sm:p-5 lg:p-6 xl:p-8 w-full max-w-full overflow-x-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}
