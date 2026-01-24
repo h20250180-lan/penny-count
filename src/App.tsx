@@ -28,6 +28,7 @@ const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
   const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -119,18 +120,25 @@ const AppContent: React.FC = () => {
       {/* Background decorative elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-200/20 to-transparent rounded-full blur-3xl" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-teal-200/20 to-transparent rounded-full blur-3xl" />
+
       {/* Sidebar */}
-      <div className="relative z-10">
-        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-      </div>
+      <Sidebar
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
       {/* Main Content */}
-      <div className="relative z-10 flex-1 flex flex-col min-w-0">
-        <TopBar title={getSectionTitle()} />
+      <div className="relative z-10 flex-1 flex flex-col min-w-0 w-full">
+        <TopBar
+          title={getSectionTitle()}
+          onMenuClick={() => setSidebarOpen(true)}
+        />
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto">
-          <div className="p-3 sm:p-4 lg:p-6 xl:p-8">
+          <div className="p-4 sm:p-5 lg:p-6 xl:p-8 max-w-[100vw]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}

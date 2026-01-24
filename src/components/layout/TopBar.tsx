@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Bell, Search, Wifi, WifiOff, Wallet, ChevronDown } from 'lucide-react';
+import { Bell, Search, Wifi, WifiOff, Wallet, ChevronDown, Menu } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useLineContext } from '../../contexts/LineContext';
@@ -14,9 +14,10 @@ import { AgentModeToggle } from '../coowner/AgentModeToggle';
 
 interface TopBarProps {
   title: string;
+  onMenuClick: () => void;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ title }) => {
+export const TopBar: React.FC<TopBarProps> = ({ title, onMenuClick }) => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const { isOnline } = useOffline();
@@ -29,11 +30,20 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
     <motion.div
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="bg-white/90 backdrop-blur-xl border-b border-gray-200/60 px-3 lg:px-6 py-3 flex items-center justify-between gap-3 lg:gap-4 shadow-sm sticky top-0 z-40"
+      className="bg-white/90 backdrop-blur-xl border-b border-gray-200/60 px-3 sm:px-4 lg:px-6 py-3 flex items-center justify-between gap-2 sm:gap-3 lg:gap-4 shadow-sm sticky top-0 z-40"
     >
       {/* Left section */}
-      <div className="flex items-center space-x-2 lg:space-x-4 min-w-0 flex-shrink">
-        <h1 className="text-base lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-teal-700 bg-clip-text text-transparent truncate whitespace-nowrap">{title}</h1>
+      <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 min-w-0 flex-shrink">
+        {/* Hamburger Menu - Mobile Only */}
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5 text-gray-700" />
+        </button>
+
+        <h1 className="text-sm sm:text-base lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-orange-600 via-orange-500 to-teal-700 bg-clip-text text-transparent truncate">{title}</h1>
 
         {/* Line Selector for Agents */}
         {isAgent && selectedLine && (
@@ -82,7 +92,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
         )}
 
         {/* Online/Offline indicator */}
-        <div className={`flex items-center space-x-1 lg:space-x-2 px-2 lg:px-3 py-1.5 rounded-full text-xs font-medium shadow-sm whitespace-nowrap ${
+        <div className={`hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium shadow-sm whitespace-nowrap ${
           isOnline
             ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border border-green-200'
             : 'bg-gradient-to-r from-red-50 to-orange-50 text-red-700 border border-red-200'
@@ -92,12 +102,12 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
           ) : (
             <WifiOff className="w-3.5 h-3.5 flex-shrink-0" />
           )}
-          <span className="hidden sm:inline">{isOnline ? t('online') : t('offline')}</span>
+          <span>{isOnline ? t('online') : t('offline')}</span>
         </div>
       </div>
 
       {/* Right section */}
-      <div className="flex items-center space-x-1.5 lg:space-x-2 flex-shrink-0">
+      <div className="flex items-center space-x-1 sm:space-x-1.5 lg:space-x-2 flex-shrink-0">
         {/* Search - hidden on smaller screens */}
         <div className="relative hidden 2xl:block">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -131,12 +141,12 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
         </div>
 
         {/* User info */}
-        <div className="flex items-center space-x-2 flex-shrink-0">
-          <div className="text-right hidden xl:block">
-            <p className="text-sm font-medium text-gray-800 truncate max-w-[100px]">{user?.name}</p>
+        <div className="flex items-center space-x-2 flex-shrink-0 ml-1">
+          <div className="text-right hidden md:block">
+            <p className="text-xs lg:text-sm font-medium text-gray-800 truncate max-w-[80px] lg:max-w-[120px]">{user?.name}</p>
             <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
           </div>
-          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 via-orange-600 to-teal-600 rounded-full flex items-center justify-center shadow-md ring-2 ring-orange-100 flex-shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-orange-500 via-orange-600 to-teal-600 rounded-full flex items-center justify-center shadow-md ring-2 ring-orange-100 flex-shrink-0">
             <span className="text-white font-bold text-xs">
               {user?.name.split(' ').map(n => n[0]).join('')}
             </span>

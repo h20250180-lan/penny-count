@@ -153,7 +153,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
   const cards = getCardsForRole();
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
       {cards.map((card, index) => (
         <motion.div
           key={card.title}
@@ -161,7 +161,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: index * 0.1 }}
           whileHover={{ y: -4, scale: 1.01 }}
-          className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-2xl transition-all duration-300 overflow-hidden group"
+          className="relative bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 overflow-hidden group"
         >
           {/* Decorative gradient overlay */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-100/30 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -185,7 +185,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
 
             <div>
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{card.title}</h3>
-              <p className="text-3xl font-bold text-gray-900 mb-3 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text">{card.value}</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text break-words">{card.value}</p>
               <div className="flex items-center">
                 <p className={`text-xs font-medium px-2 py-1 rounded-full ${
                   card.trend === 'up' ? 'bg-green-50 text-green-700' :

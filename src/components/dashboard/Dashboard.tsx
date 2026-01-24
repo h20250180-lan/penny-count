@@ -188,15 +188,15 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-4 sm:mb-6 lg:mb-8"
       >
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">{getDashboardTitle()}</h1>
-        <p className="text-gray-600">{getDashboardSubtitle()}</p>
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-2">{getDashboardTitle()}</h1>
+        <p className="text-sm sm:text-base text-gray-600">{getDashboardSubtitle()}</p>
       </motion.div>
 
       {/* Metrics Cards */}
@@ -204,9 +204,9 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
 
       {/* Line-wise Collections */}
       {(user?.role === 'owner' || user?.role === 'co-owner') && lineCollections.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Collections by Line</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mt-4 sm:mt-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Collections by Line</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {lineCollections.map((line) => (
               <motion.div
                 key={line.lineId}
@@ -264,17 +264,17 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
       )}
 
       {/* Recent Activity + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
         <RecentActivity onViewAll={onViewAll} />
         <QuickActions onAction={handleQuickAction} />
       </div>
 
       {/* Export Modal (simple) */}
       {exportOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Export Data</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div className="font-medium mb-2">Select Lines</div>
                 <div className="max-h-40 overflow-auto border p-2 rounded">
@@ -299,27 +299,27 @@ export const Dashboard: React.FC<{ onViewAll?: (section: string) => void }> = ({
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-4 items-end">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <div className="text-sm font-medium">Start Date</div>
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="border rounded p-2 w-full" />
+                <div className="text-sm font-medium mb-1">Start Date</div>
+                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="border rounded p-2 w-full text-sm" />
               </div>
               <div>
-                <div className="text-sm font-medium">End Date</div>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="border rounded p-2 w-full" />
+                <div className="text-sm font-medium mb-1">End Date</div>
+                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="border rounded p-2 w-full text-sm" />
               </div>
               <div>
-                <div className="text-sm font-medium">Format</div>
-                <select value={exportFormat} onChange={e => setExportFormat(e.target.value as any)} className="border rounded p-2 w-full">
+                <div className="text-sm font-medium mb-1">Format</div>
+                <select value={exportFormat} onChange={e => setExportFormat(e.target.value as any)} className="border rounded p-2 w-full text-sm">
                   <option value="csv">CSV</option>
                   <option value="pdf">PDF (not supported server-side yet)</option>
                 </select>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end space-x-3">
-              <button className="px-4 py-2 rounded border" onClick={() => setExportOpen(false)}>Cancel</button>
-              <button className="px-4 py-2 rounded bg-emerald-500 text-white" onClick={performExport}>Export</button>
+            <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
+              <button className="px-4 py-2 rounded border hover:bg-gray-50 transition-colors" onClick={() => setExportOpen(false)}>Cancel</button>
+              <button className="px-4 py-2 rounded bg-emerald-500 text-white hover:bg-emerald-600 transition-colors" onClick={performExport}>Export</button>
             </div>
           </div>
         </div>
