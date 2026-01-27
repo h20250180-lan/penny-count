@@ -29,6 +29,203 @@ import { BulkImport } from './BulkImport';
 
 // Removed mock data
 
+interface NewLoanModalProps {
+  borrower: Borrower;
+  user: any;
+  lines: Line[];
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const NewLoanModal: React.FC<NewLoanModalProps> = ({ borrower, user, lines, onClose, onSuccess }) => {
+  const [initialAmount, setInitialAmount] = React.useState<string>('');
+  const [finalAmount, setFinalAmount] = React.useState<string>('');
+  const [tenure, setTenure] = React.useState<string>('30');
+  const [interestRate, setInterestRate] = React.useState<string>('');
+  const { push: pushToast } = useToast();
+
+  const calculateInterestRate = () => {
+    const initial = parseFloat(initialAmount);
+    const final = parseFloat(finalAmount);
+    const tenureDays = parseFloat(tenure);
+
+    if (initial > 0 && final > 0 && tenureDays > 0 && final > initial) {
+      const interestAmount = final - initial;
+      const rate = (interestAmount / initial) * 100;
+      setInterestRate(rate.toFixed(2));
+    }
+  };
+
+  const calculateFinalAmount = () => {
+    const initial = parseFloat(initialAmount);
+    const rate = parseFloat(interestRate);
+    const tenureDays = parseFloat(tenure);
+
+    if (initial > 0 && rate >= 0 && tenureDays > 0) {
+      const interestAmount = (initial * rate) / 100;
+      const final = initial + interestAmount;
+      setFinalAmount(final.toFixed(2));
+    }
+  };
+
+  React.useEffect(() => {
+    if (initialAmount && finalAmount && tenure) {
+      calculateInterestRate();
+    }
+  }, [initialAmount, finalAmount, tenure]);
+
+  React.useEffect(() => {
+    if (initialAmount && interestRate && tenure && !finalAmount) {
+      calculateFinalAmount();
+    }
+  }, [initialAmount, interestRate, tenure]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const initial = parseFloat(initialAmount);
+    const final = parseFloat(finalAmount);
+    const rate = parseFloat(interestRate);
+    const tenureDays = parseFloat(tenure);
+
+    if (!initial || !final || !rate || !tenureDays) {
+      pushToast({ type: 'error', message: 'Please fill all required fields' });
+      return;
+    }
+
+    if (final <= initial) {
+      pushToast({ type: 'error', message: 'Final amount must be greater than initial amount' });
+      return;
+    }
+
+    try {
+      const loanPayload = {
+        borrowerId: borrower.id,
+        lineId: borrower.lineId,
+        agentId: user?.id,
+        amount: initial,
+        interestRate: rate,
+        tenure: tenureDays,
+        repaymentFrequency: 'daily' as const,
+        totalAmount: Math.round(final),
+        paidAmount: 0,
+        remainingAmount: Math.round(final),
+        status: 'active' as const
+      };
+      await dataService.createLoan(loanPayload);
+      onSuccess();
+    } catch (err) {
+      console.error('Failed to create loan', err);
+      pushToast({ type: 'error', message: (err as any)?.message || 'Failed to create loan' });
+    }
+  };
+
+  const borrowerLine = lines.find(l => l.id === borrower.lineId);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-800">New Loan for {borrower.name}</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Initial Loan Amount (₹)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={initialAmount}
+              onChange={(e) => setInitialAmount(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              required
+              placeholder="Enter initial amount"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Final Amount (₹)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={finalAmount}
+              onChange={(e) => {
+                setFinalAmount(e.target.value);
+                setInterestRate('');
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              required
+              placeholder="Enter final amount or leave to auto-calculate"
+            />
+            <p className="text-xs text-gray-500 mt-1">Total amount to be repaid including interest</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tenure (days)</label>
+            <input
+              type="number"
+              value={tenure}
+              onChange={(e) => setTenure(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              required
+              placeholder="Enter tenure in days"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Interest Rate (%)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={interestRate}
+              onChange={(e) => {
+                setInterestRate(e.target.value);
+                setFinalAmount('');
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              required
+              placeholder="Auto-calculated or enter manually"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {interestRate && initialAmount && finalAmount
+                ? `Interest amount: ₹${(parseFloat(finalAmount) - parseFloat(initialAmount)).toFixed(2)}`
+                : 'Enter final amount to calculate, or enter rate to calculate final amount'}
+            </p>
+          </div>
+
+          {borrowerLine && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+              <p className="text-sm text-emerald-700 font-medium mb-1">Assigned Line:</p>
+              <p className="text-lg font-bold text-emerald-900">{borrowerLine.name}</p>
+            </div>
+          )}
+
+          <div className="flex space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+            >
+              Create Loan
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+};
+
 export const BorrowersManagement: React.FC = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -551,82 +748,22 @@ export const BorrowersManagement: React.FC = () => {
 
       {/* New Loan Modal */}
       {showNewLoanModal && loanBorrower && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">New Loan for {loanBorrower.name}</h2>
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              const amount = Number(fd.get('amount')) || 0;
-              const tenure = Number(fd.get('tenure')) || 30;
-              const interestRate = Number(fd.get('interestRate')) || 2.5;
-              const lineId = fd.get('lineId') as string || loanBorrower.lineId;
-              try {
-                const loanPayload = {
-                  borrowerId: loanBorrower.id,
-                  lineId,
-                  agentId: user?.id,
-                  amount,
-                  interestRate,
-                  tenure,
-                  repaymentFrequency: 'daily' as const,
-                  totalAmount: Math.round(amount + (amount * (interestRate/100)) ),
-                  paidAmount: 0,
-                  remainingAmount: Math.round(amount + (amount * (interestRate/100)) ),
-                  status: 'active' as const
-                };
-                await dataService.createLoan(loanPayload);
-                pushToast({ type: 'success', message: 'Loan created successfully' });
-                // Refresh borrowers and lines
-                const [bData, lData] = await Promise.all([dataService.getBorrowers(), dataService.getLines()]);
-                setBorrowers(bData);
-                setLines(lData);
-                setShowNewLoanModal(false);
-                // Re-open borrower details using refreshed data so counts update
-                const updated = bData.find(b => b.id === loanBorrower.id) || loanBorrower;
-                setSelectedBorrower(updated as any);
-                setShowDetailsModal(true);
-              } catch (err) {
-                console.error('Failed to create loan', err);
-                pushToast({ type: 'error', message: (err as any)?.message || 'Failed to create loan' });
-              }
-            }} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                <input name="amount" type="number" required className="w-full px-3 py-2 border rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tenure (days)</label>
-                <input name="tenure" type="number" className="w-full px-3 py-2 border rounded" defaultValue={30} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Interest Rate (%)</label>
-                <input name="interestRate" type="number" step="0.1" className="w-full px-3 py-2 border rounded" defaultValue={2.5} />
-              </div>
-              {selectedLine ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <p className="text-sm text-blue-700 font-medium mb-1">Creating loan for line:</p>
-                  <p className="text-lg font-bold text-blue-900">📍 {selectedLine.name}</p>
-                  <input type="hidden" name="lineId" value={selectedLine.id} />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Assign Line</label>
-                  <select name="lineId" className="w-full px-3 py-2 border rounded" required>
-                    <option value="">Select Line</option>
-                    {(user?.role === 'agent' ? lines.filter(l => l.agentId === user.id) : lines).map(l => (
-                      <option key={l.id} value={l.id}>{l.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <div className="flex space-x-3 pt-4">
-                <button type="button" onClick={() => setShowNewLoanModal(false)} className="flex-1 bg-gray-100 py-2 rounded">Cancel</button>
-                <button type="submit" className="flex-1 bg-emerald-500 text-white py-2 rounded">Create Loan</button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
+        <NewLoanModal
+          borrower={loanBorrower}
+          user={user}
+          lines={lines}
+          onClose={() => setShowNewLoanModal(false)}
+          onSuccess={async () => {
+            pushToast({ type: 'success', message: 'Loan created successfully' });
+            const [bData, lData] = await Promise.all([dataService.getBorrowers(), dataService.getLines()]);
+            setBorrowers(bData);
+            setLines(lData);
+            setShowNewLoanModal(false);
+            const updated = bData.find(b => b.id === loanBorrower.id) || loanBorrower;
+            setSelectedBorrower(updated as any);
+            setShowDetailsModal(true);
+          }}
+        />
       )}
 
       {/* Borrower Details Modal */}
@@ -718,32 +855,54 @@ export const BorrowersManagement: React.FC = () => {
 
               {/* Action Buttons */}
               {user?.role === 'agent' && (
-                <div className="flex space-x-3 pt-4 border-t border-gray-200">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={(e) => { e.stopPropagation(); handleNewLoanClick(selectedBorrower!); }}
-                    className="flex-1 bg-indigo-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-600 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <CreditCard className="w-5 h-5" />
-                    <span>New Loan</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <TrendingUp className="w-5 h-5" />
-                    <span>Collect Payment</span>
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Edit className="w-5 h-5" />
-                    <span>Edit</span>
-                  </motion.button>
+                <div className="pt-4 border-t border-gray-200">
+                  {selectedBorrower.activeLoans && selectedBorrower.activeLoans > 0 ? (
+                    <div className="flex space-x-3">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={(e) => { e.stopPropagation(); handleNewLoanClick(selectedBorrower!); }}
+                        className="flex-1 bg-indigo-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-600 transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <CreditCard className="w-5 h-5" />
+                        <span>New Loan</span>
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex-1 bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <TrendingUp className="w-5 h-5" />
+                        <span>Collect Payment</span>
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleToggleRisk(selectedBorrower.id)}
+                        className={`${selectedBorrower.isHighRisk ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2`}
+                      >
+                        <AlertTriangle className="w-5 h-5" />
+                        <span>{selectedBorrower.isHighRisk ? 'Unmark Risk' : 'Mark Risk'}</span>
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+                        <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                        <p className="text-amber-800 font-medium">No Active Loan</p>
+                        <p className="text-sm text-amber-600 mt-1">This borrower has no active loan associated</p>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={(e) => { e.stopPropagation(); handleNewLoanClick(selectedBorrower!); }}
+                        className="w-full bg-emerald-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <Plus className="w-5 h-5" />
+                        <span>Add Loan</span>
+                      </motion.button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
