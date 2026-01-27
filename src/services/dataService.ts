@@ -146,9 +146,10 @@ class DataService {
       .update(updateData)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Line not found or update not allowed');
 
     return {
       id: data.id,
@@ -253,9 +254,10 @@ class DataService {
       .update(updateData)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Borrower not found or update not allowed');
 
     return {
       id: data.id,
@@ -402,7 +404,7 @@ class DataService {
         .from('lines')
         .select('total_disbursed, current_balance')
         .eq('id', loan.lineId)
-        .single();
+        .maybeSingle();
 
       if (line) {
         await supabase
@@ -439,7 +441,7 @@ class DataService {
     if (updates.status !== undefined) updateData.status = updates.status;
 
     if (updates.amount !== undefined || updates.interestRate !== undefined || updates.totalAmount !== undefined) {
-      const { data: currentLoan } = await supabase.from('loans').select('principal, interest_rate, total_amount, amount_paid').eq('id', id).single();
+      const { data: currentLoan } = await supabase.from('loans').select('principal, interest_rate, total_amount, amount_paid').eq('id', id).maybeSingle();
 
       const principal = updates.amount !== undefined ? updates.amount : Number(currentLoan?.principal || 0);
       const interestRate = updates.interestRate !== undefined ? updates.interestRate : Number(currentLoan?.interest_rate || 0);
@@ -454,11 +456,10 @@ class DataService {
 
     if (updates.tenure !== undefined) {
       updateData.tenure = updates.tenure;
-      const { data: currentLoan } = await supabase.from('loans').select('disbursed_date').eq('id', id).single();
+      const { data: currentLoan } = await supabase.from('loans').select('disbursed_date').eq('id', id).maybeSingle();
       if (currentLoan) {
         const disbursedDate = new Date(currentLoan.disbursed_date);
         const dueDate = new Date(disbursedDate);
-        // Tenure is in months
         dueDate.setMonth(dueDate.getMonth() + updates.tenure);
         updateData.due_date = dueDate.toISOString();
       }
@@ -466,7 +467,7 @@ class DataService {
 
     if (updates.paidAmount !== undefined) {
       updateData.amount_paid = updates.paidAmount;
-      const { data: loan } = await supabase.from('loans').select('total_amount').eq('id', id).single();
+      const { data: loan } = await supabase.from('loans').select('total_amount').eq('id', id).maybeSingle();
       if (loan) {
         updateData.balance = Number(loan.total_amount) - updates.paidAmount;
       }
@@ -477,9 +478,10 @@ class DataService {
       .update(updateData)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Loan not found or update not allowed');
 
     return {
       id: data.id,
@@ -567,7 +569,7 @@ class DataService {
       .from('loans')
       .select('amount_paid, line_id')
       .eq('id', payment.loanId)
-      .single();
+      .maybeSingle();
 
     if (loan) {
       const newPaidAmount = Number(loan.amount_paid) + (payment.amount || 0);
@@ -578,7 +580,7 @@ class DataService {
           .from('lines')
           .select('total_collected, current_balance')
           .eq('id', loan.line_id)
-          .single();
+          .maybeSingle();
 
         if (line) {
           await supabase
@@ -618,9 +620,10 @@ class DataService {
       .update(updateData)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Payment not found or update not allowed');
 
     return {
       id: data.id,
@@ -738,7 +741,7 @@ class DataService {
       .from('penalties')
       .select('*')
       .eq('id', penaltyId)
-      .single();
+      .maybeSingle();
 
     if (!penalty) throw new Error('Penalty not found');
 
@@ -773,7 +776,7 @@ class DataService {
       .from('lines')
       .select('total_collected, current_balance')
       .eq('id', penalty.line_id)
-      .single();
+      .maybeSingle();
 
     if (line) {
       await supabase
@@ -936,7 +939,7 @@ class DataService {
       .from('users')
       .select('role')
       .eq('id', user?.id)
-      .single();
+      .maybeSingle();
 
     if (userRole.data?.role === 'owner') {
       insertData.status = 'approved';
@@ -977,9 +980,10 @@ class DataService {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Withdrawal not found or update not allowed');
 
     return data;
   }
@@ -992,9 +996,10 @@ class DataService {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Withdrawal not found or update not allowed');
 
     return data;
   }
@@ -1059,9 +1064,10 @@ class DataService {
       .update(updateData)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Commission not found or update not allowed');
 
     return {
       id: data.id,
@@ -1360,7 +1366,7 @@ class DataService {
         .from('lines')
         .select('current_balance')
         .eq('id', expense.lineId)
-        .single();
+        .maybeSingle();
 
       if (!lineError && lineData) {
         const newBalance = Number(lineData.current_balance) - Number(expense.amount);
@@ -1402,9 +1408,10 @@ class DataService {
       })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Expense not found or update not allowed');
 
     return {
       id: data.id,
@@ -1501,9 +1508,10 @@ class DataService {
       .update(snakeCaseUpdates)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Daily account not found or update not allowed');
 
     return {
       id: data.id,
@@ -1592,9 +1600,10 @@ class DataService {
       })
       .eq('id', paymentId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('QR payment not found or update not allowed');
     return data;
   }
 
@@ -1702,9 +1711,10 @@ class DataService {
       })
       .eq('id', sessionId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Session not found or update not allowed');
     return data;
   }
 
@@ -1718,9 +1728,10 @@ class DataService {
       })
       .eq('id', sessionId)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('Session not found or update not allowed');
     return data;
   }
 
