@@ -153,7 +153,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ metrics }) => {
   const cards = getCardsForRole();
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-7xl">
       {cards.map((card, index) => (
         <motion.div
           key={card.title}
