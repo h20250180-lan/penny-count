@@ -130,7 +130,6 @@ export const LoansManagement: React.FC = () => {
   const [borrowerMap, setBorrowerMap] = useState<{ [key: string]: string }>(emptyBorrowerMap);
   const { push: pushToast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [showNewBorrowerForm, setShowNewBorrowerForm] = useState(false);
 
   const [lines, setLines] = React.useState<any[]>([]);
 
@@ -202,7 +201,6 @@ export const LoansManagement: React.FC = () => {
 
   const handleCreateLoan = () => {
     setShowCreateModal(true);
-    setShowNewBorrowerForm(false);
   };
 
   const handleCreateLoanSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -210,39 +208,7 @@ export const LoansManagement: React.FC = () => {
     const formData = new FormData(e.currentTarget);
 
     try {
-      let borrowerId = formData.get('borrowerId') as string;
-
-      // Create new borrower if form is shown
-      if (showNewBorrowerForm) {
-        const newBorrowerName = formData.get('newBorrowerName') as string;
-        const newBorrowerPhone = formData.get('newBorrowerPhone') as string;
-        const newBorrowerAddress = formData.get('newBorrowerAddress') as string;
-
-        if (!newBorrowerName || !newBorrowerPhone) {
-          pushToast({ type: 'error', message: 'Please fill in all borrower details' });
-          return;
-        }
-
-        if (!selectedLine?.id) {
-          pushToast({ type: 'error', message: 'Please select a line first' });
-          return;
-        }
-
-        const newBorrower = {
-          name: newBorrowerName,
-          phone: newBorrowerPhone,
-          address: newBorrowerAddress || '',
-          lineId: selectedLine.id,
-          agentId: user!.id
-        };
-
-        const createdBorrower = await dataService.createBorrower(newBorrower);
-        borrowerId = createdBorrower.id;
-
-        // Update borrower map
-        setBorrowerMap({ ...borrowerMap, [createdBorrower.id]: createdBorrower.name });
-        pushToast({ type: 'success', message: `Borrower "${createdBorrower.name}" created successfully` });
-      }
+      const borrowerId = formData.get('borrowerId') as string;
 
       if (!borrowerId) {
         pushToast({ type: 'error', message: 'Please select a borrower' });
@@ -282,7 +248,6 @@ export const LoansManagement: React.FC = () => {
       const createdLoan = await dataService.createLoan(newLoan);
       setLoans([...loans, createdLoan]);
       setShowCreateModal(false);
-      setShowNewBorrowerForm(false);
       pushToast({ type: 'success', message: 'Loan created successfully' });
     } catch (error) {
       console.error('Error creating loan:', error);
@@ -720,62 +685,17 @@ export const LoansManagement: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Borrower
                 </label>
-
-                {!showNewBorrowerForm ? (
-                  <div className="space-y-2">
-                    <select name="borrowerId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required={!showNewBorrowerForm}>
-                      <option value="">Choose existing borrower</option>
-                      {Object.entries(borrowerMap).length > 0 ? (
-                        Object.entries(borrowerMap).map(([id, name]) => (
-                          <option key={id} value={id}>{name}</option>
-                        ))
-                      ) : (
-                        <option value="">No borrowers available</option>
-                      )}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewBorrowerForm(true)}
-                      className="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center space-x-1"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Or create new borrower</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-gray-700">New Borrower Details</span>
-                      <button
-                        type="button"
-                        onClick={() => setShowNewBorrowerForm(false)}
-                        className="text-sm text-gray-500 hover:text-gray-700"
-                      >
-                        Use existing
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      name="newBorrowerName"
-                      placeholder="Borrower Name"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                      required={showNewBorrowerForm}
-                    />
-                    <input
-                      type="tel"
-                      name="newBorrowerPhone"
-                      placeholder="Phone Number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                      required={showNewBorrowerForm}
-                    />
-                    <textarea
-                      name="newBorrowerAddress"
-                      placeholder="Address (optional)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                      rows={2}
-                    />
-                  </div>
-                )}
+                <select name="borrowerId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
+                  <option value="">Select a borrower</option>
+                  {Object.entries(borrowerMap).length > 0 ? (
+                    Object.entries(borrowerMap).map(([id, name]) => (
+                      <option key={id} value={id}>{name}</option>
+                    ))
+                  ) : (
+                    <option value="">No borrowers available</option>
+                  )}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Please add borrowers first before creating loans</p>
               </div>
               <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
