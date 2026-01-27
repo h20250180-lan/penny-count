@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (emailOrPhone: string, password: string) => Promise<boolean>;
   signup: (user: { name: string; email: string; phone: string; password: string; role: string }) => Promise<boolean>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   loginError: string | null;
   signupError: string | null;
 }
@@ -76,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photo: data.photo,
           isActive: data.is_active,
           assignedLines: data.assigned_lines || [],
+          approvalStatus: data.approval_status,
           createdAt: new Date(data.created_at)
         };
         setUser(userProfile);
@@ -278,8 +280,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshUser = async () => {
+    if (user?.id) {
+      await loadUserProfile(user.id);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, loginError, signupError }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser, loginError, signupError }}>
       {children}
     </AuthContext.Provider>
   );

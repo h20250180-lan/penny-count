@@ -10,6 +10,7 @@ export interface User {
   isActive: boolean;
   assignedLines?: string[];
   addedBy?: string;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface Line {

@@ -57,9 +57,11 @@ export const UsersManagement: React.FC = () => {
     try {
       const usersData = await dataService.getUsers();
       // Filter to show only agents and co-owners added by this owner
+      // Show both pending and approved users
       const filtered = usersData.filter((u: User) =>
         (u.role === 'agent' || u.role === 'co-owner') &&
-        u.addedBy === currentUser.id
+        u.addedBy === currentUser.id &&
+        u.approvalStatus !== 'rejected'
       );
       setUsers(filtered);
     } catch (error: any) {
@@ -102,6 +104,7 @@ export const UsersManagement: React.FC = () => {
           role: foundUser.role,
           isActive: foundUser.is_active,
           addedBy: foundUser.added_by,
+          approvalStatus: foundUser.approval_status,
           createdAt: foundUser.created_at
         };
 
@@ -376,7 +379,12 @@ export const UsersManagement: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm font-medium">Total Users</p>
-              <p className="text-3xl font-bold mt-2">{users.length}</p>
+              <p className="text-3xl font-bold mt-2">{users.filter(u => u.approvalStatus === 'approved').length}</p>
+              {users.filter(u => u.approvalStatus === 'pending').length > 0 && (
+                <p className="text-xs text-blue-200 mt-1">
+                  +{users.filter(u => u.approvalStatus === 'pending').length} pending
+                </p>
+              )}
             </div>
             <UsersIcon className="w-12 h-12 opacity-30" />
           </div>
@@ -449,6 +457,7 @@ export const UsersManagement: React.FC = () => {
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Phone</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Role</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Approval</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
@@ -506,6 +515,27 @@ export const UsersManagement: React.FC = () => {
                         </>
                       )}
                     </button>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${
+                      user.approvalStatus === 'pending'
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : user.approvalStatus === 'approved'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {user.approvalStatus === 'pending' ? (
+                        <>
+                          <AlertCircle className="w-3 h-3" />
+                          <span>Pending Approval</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Approved</span>
+                        </>
+                      )}
+                    </span>
                   </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex items-center space-x-2">

@@ -13,6 +13,7 @@ class DataService {
       ...user,
       isActive: user.is_active,
       addedBy: user.added_by,
+      approvalStatus: user.approval_status,
       createdAt: user.created_at
     }));
   }
@@ -65,6 +66,7 @@ class DataService {
         role: claimedUser.role,
         isActive: claimedUser.is_active,
         addedBy: claimedUser.added_by,
+        approvalStatus: claimedUser.approval_status,
         createdAt: claimedUser.created_at
       };
     }
@@ -108,7 +110,36 @@ class DataService {
       ...data,
       isActive: data.is_active,
       addedBy: data.added_by,
+      approvalStatus: data.approval_status,
       createdAt: data.created_at
+    };
+  }
+
+  async respondToTeamRequest(response: 'approved' | 'rejected'): Promise<User> {
+    const { data, error } = await supabase
+      .rpc('respond_to_team_request', { response });
+
+    if (error) {
+      console.error('Respond to team request error:', error);
+      throw error;
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error('Failed to respond to team request');
+    }
+
+    const updatedUser = Array.isArray(data) ? data[0] : data;
+
+    return {
+      id: updatedUser.id,
+      name: updatedUser.name,
+      phone: updatedUser.phone,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      isActive: updatedUser.is_active,
+      addedBy: updatedUser.added_by,
+      approvalStatus: updatedUser.approval_status,
+      createdAt: updatedUser.created_at
     };
   }
 

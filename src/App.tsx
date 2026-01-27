@@ -24,6 +24,9 @@ import { InstallPrompt } from './components/pwa/InstallPrompt';
 import { ExpensesManagement } from './components/expenses/ExpensesManagement';
 import { DailyMonitoring } from './components/daily-monitoring/DailyMonitoring';
 import { ResetPassword } from './components/auth/ResetPassword';
+import { PendingTeamRequestBanner } from './components/users/PendingTeamRequestBanner';
+import { ToastProvider } from './contexts/ToastContext';
+import { Toaster } from './components/ui/Toaster';
 
 const AppContent: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -145,6 +148,9 @@ const AppContent: React.FC = () => {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
+        {/* Pending Team Request Banner */}
+        <PendingTeamRequestBanner />
+
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
           <div className="p-4 sm:p-5 lg:p-6 xl:p-8 w-full max-w-full overflow-x-hidden">
@@ -173,16 +179,19 @@ function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <OfflineProvider>
-          <AuthProvider>
-            <LineProvider>
-              <LocationProvider>
-                <LineSelector />
-                <AppContent />
-              </LocationProvider>
-            </LineProvider>
-          </AuthProvider>
-        </OfflineProvider>
+        <ToastProvider>
+          <OfflineProvider>
+            <AuthProvider>
+              <LineProvider>
+                <LocationProvider>
+                  <LineSelector />
+                  <AppContent />
+                  <Toaster />
+                </LocationProvider>
+              </LineProvider>
+            </AuthProvider>
+          </OfflineProvider>
+        </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>
   );
