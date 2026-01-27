@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  User, 
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  User,
   Bell,
   Shield,
   Database,
@@ -12,16 +12,19 @@ import {
   Eye,
   EyeOff,
   Smartphone,
-  Lock
+  Lock,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { dataService } from '../../services/dataService';
+import { supabase } from '../../lib/supabase';
 
 // lightweight feedback fallback
 const notify = (msg: string) => { try { window.alert(msg); } catch {} };
 
 export const Settings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,6 +34,9 @@ export const Settings: React.FC = () => {
   const [passwords, setPasswords] = useState({ current: '', newPassword: '', confirm: '' });
   const [saving, setSaving] = useState(false);
   const [themeDark, setThemeDark] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [notifications, setNotifications] = useState({
     payments: true,
     overdue: true,
@@ -120,6 +126,57 @@ export const Settings: React.FC = () => {
       setEditValues({ name: normalized.name ?? '', email: normalized.email ?? '', phone: normalized.phone ?? '' });
     }
   }, [user, profile]);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'DELETE') {
+      notify('Please type DELETE to confirm account deletion');
+      return;
+    }
+
+    if (!profile?.id && !user?.id) {
+      notify('Unable to delete account: User ID not found');
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const userId = profile?.id || user?.id;
+
+      // Delete user from the database
+      const { error: deleteError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      // Delete auth user
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+
+      if (authError) {
+        console.error('Auth deletion error:', authError);
+      }
+
+      // Clear local storage and logout
+      localStorage.clear();
+      notify('Account deleted successfully');
+
+      // Redirect to login
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+    } catch (err: any) {
+      console.error('Delete account error:', err);
+      notify(err.message || 'Failed to delete account. Please contact support.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      setDeleteConfirmation('');
+    }
+  };
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -541,20 +598,46 @@ export const Settings: React.FC = () => {
 
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
-        <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-red-800">Delete All Data</h4>
-              <p className="text-sm text-red-600">Permanently delete all your data. This action cannot be undone.</p>
+
+        <div className="space-y-4">
+          <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-red-800">Delete All Data</h4>
+                <p className="text-sm text-red-600">Permanently delete all your data. This action cannot be undone.</p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center space-x-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete</span>
+              </motion.button>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center space-x-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
-            </motion.button>
+          </div>
+
+          <div className="p-4 border-2 border-red-300 rounded-lg bg-red-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  <AlertTriangle className="w-5 h-5 text-red-700" />
+                  <h4 className="font-bold text-red-900">Delete Account</h4>
+                </div>
+                <p className="text-sm text-red-700 font-medium">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowDeleteModal(true)}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center space-x-2 shadow-lg"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Account</span>
+              </motion.button>
+            </div>
           </div>
         </div>
       </div>
@@ -623,6 +706,103 @@ export const Settings: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => !isDeleting && setShowDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-red-600" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">Delete Account</h3>
+                </div>
+                {!isDeleting && (
+                  <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                )}
+              </div>
+
+              <div className="mb-6">
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                  <p className="text-red-800 font-semibold mb-2">Warning: This action is irreversible!</p>
+                  <ul className="text-sm text-red-700 space-y-1 list-disc list-inside">
+                    <li>Your account will be permanently deleted</li>
+                    <li>All your data will be lost</li>
+                    <li>You will not be able to recover your account</li>
+                    <li>Active loans and borrowers data will be removed</li>
+                  </ul>
+                </div>
+
+                <p className="text-gray-700 mb-4">
+                  To confirm deletion, please type <span className="font-bold text-red-600">DELETE</span> in the box below:
+                </p>
+
+                <input
+                  type="text"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder="Type DELETE to confirm"
+                  disabled={isDeleting}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 outline-none transition-all disabled:bg-gray-100"
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmation('');
+                  }}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: deleteConfirmation === 'DELETE' && !isDeleting ? 1.02 : 1 }}
+                  whileTap={{ scale: deleteConfirmation === 'DELETE' && !isDeleting ? 0.98 : 1 }}
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmation !== 'DELETE' || isDeleting}
+                  className="flex-1 px-4 py-3 bg-red-600 rounded-lg font-semibold text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-5 h-5" />
+                      <span>Delete Account</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -222,8 +222,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('Attempting login for:', emailOrPhone);
 
+      let email = emailOrPhone;
+
+      // Check if input is a phone number (10 digits)
+      const cleanedInput = emailOrPhone.replace(/[^0-9]/g, '');
+      if (cleanedInput.length === 10) {
+        console.log('Input detected as phone number, looking up email...');
+
+        // Look up email from phone number
+        const { data: userData, error: lookupError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('phone', cleanedInput)
+          .maybeSingle();
+
+        if (lookupError) {
+          console.error('Phone lookup error:', lookupError);
+          throw new Error('Invalid phone number or credentials.');
+        }
+
+        if (!userData) {
+          throw new Error('No account found with this phone number.');
+        }
+
+        email = userData.email;
+        console.log('Found email for phone number');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailOrPhone,
+        email: email,
         password: password,
       });
 
