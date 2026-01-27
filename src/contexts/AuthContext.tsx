@@ -229,23 +229,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (cleanedInput.length === 10) {
         console.log('Input detected as phone number, looking up email...');
 
-        // Look up email from phone number
-        const { data: userData, error: lookupError } = await supabase
-          .from('users')
-          .select('email')
-          .eq('phone', cleanedInput)
-          .maybeSingle();
+        // Use the secure database function to look up email by phone
+        const { data, error: lookupError } = await supabase.rpc('get_email_by_phone', {
+          phone_number: cleanedInput
+        });
 
         if (lookupError) {
           console.error('Phone lookup error:', lookupError);
           throw new Error('Invalid phone number or credentials.');
         }
 
-        if (!userData) {
+        if (!data) {
           throw new Error('No account found with this phone number.');
         }
 
-        email = userData.email;
+        email = data;
         console.log('Found email for phone number');
       }
 
