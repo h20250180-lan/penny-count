@@ -43,13 +43,16 @@ class DataService {
       .update(updateData)
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new Error('User not found or update not allowed');
+
     return {
       ...data,
       isActive: data.is_active,
-      addedBy: data.added_by
+      addedBy: data.added_by,
+      createdAt: data.created_at
     };
   }
 
