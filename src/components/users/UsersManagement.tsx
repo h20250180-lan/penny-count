@@ -84,16 +84,25 @@ export const UsersManagement: React.FC = () => {
       const { data: searchResults, error: searchError } = await supabase
         .rpc('search_user_by_phone', { search_phone: phoneSearch });
 
-      if (searchError) throw searchError;
+      if (searchError) {
+        console.error('Search error:', searchError);
+        throw searchError;
+      }
+
+      console.log('Search results:', searchResults);
 
       // Check if any user was found
-      if (searchResults && searchResults.length > 0) {
-        const allUsersData = searchResults[0];
+      if (searchResults && Array.isArray(searchResults) && searchResults.length > 0) {
+        const foundUser = searchResults[0];
         const found: User = {
-          ...allUsersData,
-          isActive: allUsersData.is_active,
-          addedBy: allUsersData.added_by,
-          createdAt: allUsersData.created_at
+          id: foundUser.id,
+          name: foundUser.name,
+          email: foundUser.email,
+          phone: foundUser.phone,
+          role: foundUser.role,
+          isActive: foundUser.is_active,
+          addedBy: foundUser.added_by,
+          createdAt: foundUser.created_at
         };
 
         // Check if user is owner
@@ -121,6 +130,7 @@ export const UsersManagement: React.FC = () => {
         setNewUserData({ ...newUserData, phone: phoneSearch });
       }
     } catch (error: any) {
+      console.error('Phone search error:', error);
       setError(error.message || 'Error searching user');
     } finally {
       setLoading(false);
