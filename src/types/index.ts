@@ -104,6 +104,51 @@ export interface Fine {
   isPaid: boolean;
 }
 
+export interface MissedPayment {
+  id: string;
+  loanId: string;
+  borrowerId: string;
+  expectedDate: Date;
+  weekNumber?: number;
+  amountExpected: number;
+  markedBy?: string;
+  markedAt: Date;
+  reason?: string;
+  paidLater: boolean;
+  paidAt?: Date;
+  paymentId?: string;
+  notes?: string;
+  createdAt: Date;
+}
+
+export interface Penalty {
+  id: string;
+  loanId: string;
+  borrowerId: string;
+  lineId: string;
+  penaltyType: 'missed_payment' | 'late_payment' | 'custom';
+  amount: number;
+  reason: string;
+  appliedBy: string;
+  appliedAt: Date;
+  isPaid: boolean;
+  paidAt?: Date;
+  paymentId?: string;
+  notes?: string;
+  createdAt: Date;
+}
+
+export interface PaymentSchedule {
+  termNumber: number;
+  dueDate: Date;
+  amountDue: number;
+  amountPaid: number;
+  status: 'pending' | 'paid' | 'partial' | 'missed' | 'overdue';
+  paymentId?: string;
+  missedPaymentId?: string;
+  paidAt?: Date;
+}
+
 export interface Commission {
   id: string;
   coOwnerId: string;

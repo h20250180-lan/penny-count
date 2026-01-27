@@ -65,7 +65,6 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
     { id: 'borrowers', label: t('myBorrowers'), icon: UserCheck },
     { id: 'loans', label: t('activeLoans'), icon: CreditCard },
     { id: 'collections', label: t('collections'), icon: Wallet },
-    { id: 'payments', label: t('payments'), icon: TrendingUp },
     { id: 'expenses', label: t('expenses'), icon: Receipt },
   ];
 };

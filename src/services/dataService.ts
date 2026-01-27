@@ -373,8 +373,41 @@ class DataService {
     if (error) throw error;
   }
 
-  async getLoans(): Promise<Loan[]> {
+  async getLoanById(id: string): Promise<Loan> {
     const { data, error } = await supabase
+      .from('loans')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new Error('Loan not found');
+
+    return {
+      id: data.id,
+      borrowerId: data.borrower_id,
+      lineId: data.line_id,
+      agentId: data.agent_id,
+      amount: Number(data.amount),
+      interestRate: data.interest_rate,
+      tenure: data.tenure,
+      repaymentFrequency: data.repayment_frequency,
+      totalAmount: Number(data.total_amount),
+      paidAmount: Number(data.paid_amount),
+      remainingAmount: Number(data.remaining_amount),
+      status: data.status,
+      disbursedAt: new Date(data.disbursed_at),
+      dueDate: new Date(data.due_date),
+      completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
+      nextPaymentDate: new Date(data.next_payment_date),
+      dailyAmount: data.daily_amount ? Number(data.daily_amount) : undefined,
+      weeklyAmount: data.weekly_amount ? Number(data.weekly_amount) : undefined,
+      monthlyAmount: data.monthly_amount ? Number(data.monthly_amount) : undefined
+    };
+  }
+
+  async getLoans(): Promise<Loan[]> {
+    const { data, error} = await supabase
       .from('loans')
       .select('*')
       .order('created_at', { ascending: false });
@@ -594,6 +627,31 @@ class DataService {
       .eq('id', id);
 
     if (error) throw error;
+  }
+
+  async getPaymentsByLoan(loanId: string): Promise<Payment[]> {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .eq('loan_id', loanId)
+      .order('payment_date', { ascending: false });
+
+    if (error) throw error;
+
+    return (data || []).map(payment => ({
+      id: payment.id,
+      loanId: payment.loan_id,
+      borrowerId: payment.borrower_id,
+      amount: Number(payment.amount),
+      method: payment.method || 'cash',
+      transactionId: payment.transaction_id,
+      paymentDate: new Date(payment.payment_date),
+      receivedAt: payment.received_at ? new Date(payment.received_at) : undefined,
+      syncedAt: payment.synced_at ? new Date(payment.synced_at) : undefined,
+      isOffline: payment.is_offline || false,
+      notes: payment.notes,
+      createdAt: new Date(payment.created_at)
+    }));
   }
 
   async getPayments(): Promise<Payment[]> {
@@ -876,6 +934,31 @@ class DataService {
     }
 
     return payment;
+  }
+
+  async getMissedPaymentsByLoan(loanId: string): Promise<any[]> {
+    return this.getMissedPayments(loanId);
+  }
+
+  async createMissedPayment(missedPayment: {
+    loanId: string;
+    borrowerId: string;
+    expectedDate: Date;
+    weekNumber?: number;
+    amountExpected: number;
+    markedBy?: string;
+    reason?: string;
+    paidLater?: boolean;
+  }): Promise<any> {
+    return this.markPaymentMissed({
+      loanId: missedPayment.loanId,
+      borrowerId: missedPayment.borrowerId,
+      expectedDate: missedPayment.expectedDate.toISOString().split('T')[0],
+      weekNumber: missedPayment.weekNumber,
+      amountExpected: missedPayment.amountExpected,
+      reason: missedPayment.reason || '',
+      notes: ''
+    });
   }
 
   async getMissedPayments(loanId?: string): Promise<any[]> {
