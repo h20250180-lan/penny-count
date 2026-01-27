@@ -143,6 +143,15 @@ export const UsersManagement: React.FC = () => {
     setLoading(true);
     setError(null);
 
+    console.log('Attempting to add user to team:', {
+      searchedUser: searchedUser,
+      currentUser: currentUser,
+      updatePayload: {
+        isActive: true,
+        addedBy: currentUser?.id
+      }
+    });
+
     try {
       // Set the user's added_by to current owner and activate
       await dataService.updateUser(searchedUser.id, {
@@ -156,6 +165,7 @@ export const UsersManagement: React.FC = () => {
         resetModal();
       }, 2000);
     } catch (error: any) {
+      console.error('Error adding user to team:', error);
       setError(error.message || 'Error adding user');
     } finally {
       setLoading(false);

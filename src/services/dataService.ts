@@ -30,6 +30,46 @@ class DataService {
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    // If this is a claim operation (setting addedBy), use the secure function
+    if (updates.addedBy !== undefined && Object.keys(updates).length <= 2) {
+      console.log('Using claim_user_to_team function for user:', id);
+
+      const { data, error } = await supabase
+        .rpc('claim_user_to_team', {
+          user_id_to_claim: id,
+          new_added_by: updates.addedBy
+        });
+
+      if (error) {
+        console.error('Claim user error:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('Failed to claim user');
+      }
+
+      const claimedUser = Array.isArray(data) ? data[0] : data;
+      console.log('Claim successful:', claimedUser);
+
+      return {
+        id: claimedUser.id,
+        name: claimedUser.name,
+        phone: claimedUser.phone,
+        email: claimedUser.email,
+        role: claimedUser.role,
+        isActive: claimedUser.is_active,
+        addedBy: claimedUser.added_by,
+        createdAt: claimedUser.created_at
+      };
+    }
+
+    // Regular update for other fields
     const updateData: any = {};
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.email !== undefined) updateData.email = updates.email;
@@ -38,6 +78,8 @@ class DataService {
     if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
     if (updates.addedBy !== undefined) updateData.added_by = updates.addedBy;
 
+    console.log('Updating user:', id, 'with data:', updateData);
+
     const { data, error } = await supabase
       .from('users')
       .update(updateData)
@@ -45,8 +87,22 @@ class DataService {
       .select()
       .maybeSingle();
 
-    if (error) throw error;
-    if (!data) throw new Error('User not found or update not allowed');
+    if (error) {
+      console.error('Update error details:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      throw error;
+    }
+
+    if (!data) {
+      console.error('No data returned after update for user:', id);
+      throw new Error('User not found or update not allowed');
+    }
+
+    console.log('Update successful:', data);
 
     return {
       ...data,
