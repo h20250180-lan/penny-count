@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange
           x: isLargeScreen || isOpen ? 0 : '-100%'
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 flex flex-col h-full shadow-lg"
+        className="fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 flex flex-col h-screen lg:h-full shadow-lg"
       >
       {/* Header */}
       <div className="relative p-4 lg:p-6 border-b border-gray-200/50 bg-gradient-to-br from-white via-orange-50/30 to-teal-50/40 overflow-hidden">

@@ -128,7 +128,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50/20 via-white to-teal-50/30 flex relative overflow-x-hidden w-full">
+    <div className="h-full min-h-screen bg-gradient-to-br from-orange-50/20 via-white to-teal-50/30 flex relative overflow-x-hidden w-full">
       {/* Background decorative elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-200/20 to-transparent rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-teal-200/20 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -142,7 +142,7 @@ const AppContent: React.FC = () => {
       />
 
       {/* Main Content */}
-      <div className="relative z-10 flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
+      <div className="relative z-10 flex-1 flex flex-col min-w-0 w-full overflow-x-hidden h-full">
         <TopBar
           title={getSectionTitle()}
           onMenuClick={() => setSidebarOpen(true)}
@@ -152,8 +152,8 @@ const AppContent: React.FC = () => {
         <PendingTeamRequestBanner />
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
-          <div className="p-4 sm:p-5 lg:p-6 xl:p-8 w-full max-w-full overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden w-full" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="p-4 sm:p-5 lg:p-6 xl:p-8 w-full max-w-full overflow-x-hidden min-h-full">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeSection}
@@ -166,7 +166,7 @@ const AppContent: React.FC = () => {
               </motion.div>
             </AnimatePresence>
           </div>
-        </div>
+        </main>
       </div>
 
       {/* PWA Install Prompt */}
