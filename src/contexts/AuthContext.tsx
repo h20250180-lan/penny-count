@@ -67,24 +67,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
 
-      if (data) {
-        const userProfile: User = {
-          id: data.id,
-          name: data.name,
-          email: data.email,
-          phone: data.phone || '',
-          role: data.role as 'owner' | 'co-owner' | 'agent',
-          photo: data.photo,
-          isActive: data.is_active,
-          assignedLines: data.assigned_lines || [],
-          approvalStatus: data.approval_status,
-          createdAt: new Date(data.created_at)
-        };
-        setUser(userProfile);
-        localStorage.setItem('penny-count-user', JSON.stringify(userProfile));
+      if (!data) {
+        // User record not found - account was deleted
+        console.error('User account not found - may have been deleted');
+        await supabase.auth.signOut();
+        setUser(null);
+        localStorage.removeItem('penny-count-user');
+        setLoginError('This account has been deleted. Please contact support if this is an error.');
+        setIsLoading(false);
+        return;
       }
+
+      // Check if user account is inactive (soft deleted)
+      if (data.is_active === false) {
+        console.error('User account is inactive');
+        await supabase.auth.signOut();
+        setUser(null);
+        localStorage.removeItem('penny-count-user');
+        setLoginError('This account has been deactivated. Please contact support if this is an error.');
+        setIsLoading(false);
+        return;
+      }
+
+      const userProfile: User = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || '',
+        role: data.role as 'owner' | 'co-owner' | 'agent',
+        photo: data.photo,
+        isActive: data.is_active,
+        assignedLines: data.assigned_lines || [],
+        approvalStatus: data.approval_status,
+        createdAt: new Date(data.created_at)
+      };
+      setUser(userProfile);
+      localStorage.setItem('penny-count-user', JSON.stringify(userProfile));
     } catch (error: any) {
       console.error('Error loading user profile:', error);
+      await supabase.auth.signOut();
+      setUser(null);
+      localStorage.removeItem('penny-count-user');
+      setLoginError('Failed to load user profile. Please try again.');
     } finally {
       setIsLoading(false);
     }

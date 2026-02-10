@@ -143,24 +143,20 @@ export const Settings: React.FC = () => {
     try {
       const userId = profile?.id || user?.id;
 
-      // Delete user from the database
-      const { error: deleteError } = await supabase
+      // Soft delete: Set user as inactive instead of hard deleting
+      const { error: updateError } = await supabase
         .from('users')
-        .delete()
+        .update({ is_active: false })
         .eq('id', userId);
 
-      if (deleteError) {
-        throw deleteError;
+      if (updateError) {
+        throw updateError;
       }
 
-      // Delete auth user
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      // Sign out from Supabase Auth
+      await supabase.auth.signOut();
 
-      if (authError) {
-        console.error('Auth deletion error:', authError);
-      }
-
-      // Clear local storage and logout
+      // Clear local storage
       localStorage.clear();
       notify('Account deleted successfully');
 
