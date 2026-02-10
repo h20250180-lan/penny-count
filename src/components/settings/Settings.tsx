@@ -599,12 +599,13 @@ export const Settings: React.FC = () => {
         </div>
       </div>
 
-      {/* Only show danger zone for owner role */}
-      {user?.role === 'owner' && (
-        <div className="border-t border-gray-200 pt-6">
-          <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
+      {/* Danger Zone - Available to all roles */}
+      <div className="border-t border-gray-200 pt-6">
+        <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
 
-          <div className="space-y-4">
+        <div className="space-y-4">
+          {/* Delete All Data - Only for owner */}
+          {user?.role === 'owner' && (
             <div className="p-4 border border-red-200 rounded-lg bg-red-50">
               <div className="flex items-center justify-between">
                 <div>
@@ -621,52 +622,33 @@ export const Settings: React.FC = () => {
                 </motion.button>
               </div>
             </div>
+          )}
 
-            <div className="p-4 border-2 border-red-300 rounded-lg bg-red-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center space-x-2 mb-1">
-                    <AlertTriangle className="w-5 h-5 text-red-700" />
-                    <h4 className="font-bold text-red-900">Delete Account</h4>
-                  </div>
-                  <p className="text-sm text-red-700 font-medium">
-                    Permanently delete your account and all associated data. This action cannot be undone.
-                  </p>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setShowDeleteModal(true)}
-                  className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center space-x-2 shadow-lg"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete Account</span>
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Show a notice for non-owner users */}
-      {user?.role !== 'owner' && (
-        <div className="border-t border-gray-200 pt-6">
-          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
-            <div className="flex items-start space-x-3">
-              <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+          {/* Delete Account - Available to all roles */}
+          <div className="p-4 border-2 border-red-300 rounded-lg bg-red-100">
+            <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-medium text-blue-800 mb-1">Account Management</h4>
-                <p className="text-sm text-blue-700">
-                  {user?.role === 'co-owner'
-                    ? 'Some account management features are restricted to the owner. Contact the owner if you need to make changes to your account status.'
-                    : 'Account deletion and data management features are restricted. Contact your line owner or system administrator for assistance.'
-                  }
+                <div className="flex items-center space-x-2 mb-1">
+                  <AlertTriangle className="w-5 h-5 text-red-700" />
+                  <h4 className="font-bold text-red-900">Delete Account</h4>
+                </div>
+                <p className="text-sm text-red-700 font-medium">
+                  Permanently delete your account and all associated data. This action cannot be undone.
                 </p>
               </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowDeleteModal(true)}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center space-x-2 shadow-lg"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Account</span>
+              </motion.button>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 
