@@ -517,50 +517,57 @@ export const Settings: React.FC = () => {
 
   const renderDataTab = () => (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Data Export</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="p-4 border border-gray-200 rounded-lg hover:border-emerald-200 hover:bg-emerald-50 transition-all text-left"
-          >
-            <div className="flex items-center space-x-3 mb-2">
-              <Download className="w-5 h-5 text-emerald-600" />
-              <h4 className="font-medium text-gray-800">Export All Data</h4>
-            </div>
-            <p className="text-sm text-gray-500">Download complete data backup</p>
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="p-4 border border-gray-200 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-all text-left"
-          >
-            <div className="flex items-center space-x-3 mb-2">
-              <Download className="w-5 h-5 text-blue-600" />
-              <h4 className="font-medium text-gray-800">Export Reports</h4>
-            </div>
-            <p className="text-sm text-gray-500">Download performance reports</p>
-          </motion.button>
-        </div>
-      </div>
+      {/* Only show data export/import for owner and co-owner roles */}
+      {(user?.role === 'owner' || user?.role === 'co-owner') && (
+        <>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Data Export</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="p-4 border border-gray-200 rounded-lg hover:border-emerald-200 hover:bg-emerald-50 transition-all text-left"
+              >
+                <div className="flex items-center space-x-3 mb-2">
+                  <Download className="w-5 h-5 text-emerald-600" />
+                  <h4 className="font-medium text-gray-800">Export All Data</h4>
+                </div>
+                <p className="text-sm text-gray-500">Download complete data backup</p>
+              </motion.button>
 
-      <div>
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Data Import</h3>
-        <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
-          <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600 mb-2">Drag and drop files here or click to browse</p>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors"
-          >
-            Choose Files
-          </motion.button>
-          <p className="text-xs text-gray-500 mt-2">Supports CSV, Excel files up to 10MB</p>
-        </div>
-      </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="p-4 border border-gray-200 rounded-lg hover:border-blue-200 hover:bg-blue-50 transition-all text-left"
+              >
+                <div className="flex items-center space-x-3 mb-2">
+                  <Download className="w-5 h-5 text-blue-600" />
+                  <h4 className="font-medium text-gray-800">Export Reports</h4>
+                </div>
+                <p className="text-sm text-gray-500">Download performance reports</p>
+              </motion.button>
+            </div>
+          </div>
+
+          {user?.role === 'owner' && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Data Import</h3>
+              <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600 mb-2">Drag and drop files here or click to browse</p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+                >
+                  Choose Files
+                </motion.button>
+                <p className="text-xs text-gray-500 mt-2">Supports CSV, Excel files up to 10MB</p>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       <div>
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Data Sync</h3>
@@ -575,7 +582,7 @@ export const Settings: React.FC = () => {
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
             </label>
           </div>
-          
+
           <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div>
               <h4 className="font-medium text-gray-800">Manual Sync</h4>
@@ -592,51 +599,74 @@ export const Settings: React.FC = () => {
         </div>
       </div>
 
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
+      {/* Only show danger zone for owner role */}
+      {user?.role === 'owner' && (
+        <div className="border-t border-gray-200 pt-6">
+          <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
 
-        <div className="space-y-4">
-          <div className="p-4 border border-red-200 rounded-lg bg-red-50">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-red-800">Delete All Data</h4>
-                <p className="text-sm text-red-600">Permanently delete all your data. This action cannot be undone.</p>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center space-x-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Delete</span>
-              </motion.button>
-            </div>
-          </div>
-
-          <div className="p-4 border-2 border-red-300 rounded-lg bg-red-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center space-x-2 mb-1">
-                  <AlertTriangle className="w-5 h-5 text-red-700" />
-                  <h4 className="font-bold text-red-900">Delete Account</h4>
+          <div className="space-y-4">
+            <div className="p-4 border border-red-200 rounded-lg bg-red-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-red-800">Delete All Data</h4>
+                  <p className="text-sm text-red-600">Permanently delete all your data. This action cannot be undone.</p>
                 </div>
-                <p className="text-sm text-red-700 font-medium">
-                  Permanently delete your account and all associated data. This action cannot be undone.
-                </p>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center space-x-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete</span>
+                </motion.button>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowDeleteModal(true)}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center space-x-2 shadow-lg"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Delete Account</span>
-              </motion.button>
+            </div>
+
+            <div className="p-4 border-2 border-red-300 rounded-lg bg-red-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center space-x-2 mb-1">
+                    <AlertTriangle className="w-5 h-5 text-red-700" />
+                    <h4 className="font-bold text-red-900">Delete Account</h4>
+                  </div>
+                  <p className="text-sm text-red-700 font-medium">
+                    Permanently delete your account and all associated data. This action cannot be undone.
+                  </p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowDeleteModal(true)}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors flex items-center space-x-2 shadow-lg"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Delete Account</span>
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Show a notice for non-owner users */}
+      {user?.role !== 'owner' && (
+        <div className="border-t border-gray-200 pt-6">
+          <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
+            <div className="flex items-start space-x-3">
+              <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-blue-800 mb-1">Account Management</h4>
+                <p className="text-sm text-blue-700">
+                  {user?.role === 'co-owner'
+                    ? 'Some account management features are restricted to the owner. Contact the owner if you need to make changes to your account status.'
+                    : 'Account deletion and data management features are restricted. Contact your line owner or system administrator for assistance.'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

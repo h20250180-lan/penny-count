@@ -56,6 +56,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
       { id: 'expenses', label: t('expenses'), icon: Receipt },
       { id: 'commissions', label: t('commissions'), icon: Wallet },
       { id: 'analytics', label: t('reports'), icon: TrendingUp },
+      { id: 'settings', label: t('settings'), icon: Settings },
     ];
   }
 
@@ -66,6 +67,7 @@ const getNavigationItems = (role: string, t: (key: string) => string) => {
     { id: 'loans', label: t('activeLoans'), icon: CreditCard },
     { id: 'collections', label: t('collections'), icon: Wallet },
     { id: 'expenses', label: t('expenses'), icon: Receipt },
+    { id: 'settings', label: t('settings'), icon: Settings },
   ];
 };
 
