@@ -50,14 +50,28 @@ export const ExpensesManagement: React.FC = () => {
         dataService.getExpenses(agentIdFilter),
         dataService.getExpenseCategories(),
         dataService.getLines(),
-        user?.role === 'owner' ? dataService.getUsers() : Promise.resolve([])
+        user?.role === 'owner' || user?.role === 'co-owner' ? dataService.getUsers() : Promise.resolve([])
       ]);
-      setExpenses(expensesData);
+
+      let filteredExpenses = expensesData;
+
+      if (user?.role === 'owner') {
+        // Owners see all expenses
+        setAgents(usersData.filter((u: any) => u.role === 'agent' || u.role === 'co-owner'));
+      } else if (user?.role === 'co-owner') {
+        // Co-owners see only expenses from agents assigned to their lines
+        const coOwnerLines = linesData.filter((l: any) => l.co_owner_id === user.id);
+        const agentIds = coOwnerLines.map((l: any) => l.agent_id).filter(Boolean);
+
+        filteredExpenses = expensesData.filter((e: any) => agentIds.includes(e.submittedBy));
+
+        // Set agents for dropdown
+        setAgents(usersData.filter((u: any) => agentIds.includes(u.id)));
+      }
+
+      setExpenses(filteredExpenses);
       setCategories(categoriesData);
       setLines(linesData);
-      if (user?.role === 'owner') {
-        setAgents(usersData.filter((u: any) => u.role === 'agent' || u.role === 'co-owner'));
-      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -275,7 +289,7 @@ export const ExpensesManagement: React.FC = () => {
             />
           </div>
 
-          {user?.role === 'owner' && (
+          {(user?.role === 'owner' || user?.role === 'co-owner') && (
             <select
               value={selectedAgent}
               onChange={(e) => setSelectedAgent(e.target.value)}
@@ -324,7 +338,7 @@ export const ExpensesManagement: React.FC = () => {
             <thead className="bg-gradient-to-r from-red-50 to-orange-50">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Date</th>
-                {user?.role === 'owner' && (
+                {(user?.role === 'owner' || user?.role === 'co-owner') && (
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Agent</th>
                 )}
                 <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Category</th>
@@ -347,7 +361,7 @@ export const ExpensesManagement: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-900">
                       {new Date(expense.expenseDate).toLocaleDateString()}
                     </td>
-                    {user?.role === 'owner' && (
+                    {(user?.role === 'owner' || user?.role === 'co-owner') && (
                       <td className="px-6 py-4 text-sm">
                         <div className="flex flex-col">
                           <div className="flex items-center space-x-2">

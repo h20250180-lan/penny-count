@@ -76,17 +76,21 @@ export const LinesManagement: React.FC = () => {
   };
 
   const filteredLines = user?.role === 'co-owner'
-    ? lines.filter(line => line.coOwnerId === user.id)
+    ? lines.filter(line => line.coOwnerId === user.id || (line as any).co_owner_id === user.id)
     : user?.role === 'owner'
-    ? lines.filter(line => line.ownerId === user.id)
-    : lines.filter(line => line.agentId === user.id);
+    ? lines.filter(line => line.ownerId === user.id || (line as any).owner_id === user.id)
+    : lines.filter(line => line.agentId === user.id || (line as any).agent_id === user.id);
 
-  const getCoOwnerName = (coOwnerId?: string) => {
+  const getCoOwnerName = (line: Line) => {
+    const coOwnerId = line.coOwnerId || (line as any).co_owner_id;
+    if (!coOwnerId) return 'Not assigned';
     const coOwner = users.find(u => u.id === coOwnerId);
     return coOwner?.name || 'Not assigned';
   };
 
-  const getAgentName = (agentId?: string) => {
+  const getAgentName = (line: Line) => {
+    const agentId = line.agentId || (line as any).agent_id;
+    if (!agentId) return 'Not assigned';
     const agent = users.find(u => u.id === agentId);
     return agent?.name || 'Not assigned';
   };
@@ -265,12 +269,12 @@ export const LinesManagement: React.FC = () => {
 
             {/* Assignments */}
             <div className="space-y-2 mb-4 pt-4 border-t border-gray-100">
-              {line.coOwnerId && (
+              {(line.coOwnerId || (line as any).co_owner_id) && (
                 <div className="flex items-center space-x-2">
                   <UserCheck className="w-4 h-4 text-blue-500" />
                   <span className="text-sm text-gray-600">Co-Owner:</span>
                   <span className="text-sm font-medium text-gray-800">
-                    {getCoOwnerName(line.coOwnerId)}
+                    {getCoOwnerName(line)}
                   </span>
                 </div>
               )}
@@ -278,13 +282,13 @@ export const LinesManagement: React.FC = () => {
                 <Users className="w-4 h-4 text-green-500" />
                 <span className="text-sm text-gray-600">Agent:</span>
                 <span className="text-sm font-medium text-gray-800">
-                  {getAgentName(line.agentId)}
+                  {getAgentName(line)}
                 </span>
               </div>
             </div>
 
             {/* Actions */}
-            {user?.role === 'owner' && (
+            {(user?.role === 'owner' || user?.role === 'co-owner') && (
               <div className="flex space-x-2">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -294,18 +298,20 @@ export const LinesManagement: React.FC = () => {
                   className="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors flex items-center justify-center space-x-1 disabled:opacity-60"
                 >
                   <Edit className="w-4 h-4" />
-                  <span>Edit</span>
+                  <span>{user?.role === 'co-owner' ? 'Assign Agent' : 'Edit'}</span>
                 </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleDeleteLine(line.id)}
-                  disabled={opLoading}
-                  className="flex-1 bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 disabled:opacity-60"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>{t('delete')}</span>
-                </motion.button>
+                {user?.role === 'owner' && (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleDeleteLine(line.id)}
+                    disabled={opLoading}
+                    className="flex-1 bg-red-50 text-red-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center space-x-1 disabled:opacity-60"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>{t('delete')}</span>
+                  </motion.button>
+                )}
               </div>
             )}
           </motion.div>
@@ -393,38 +399,55 @@ export const LinesManagement: React.FC = () => {
       {showEditModal && editingLine && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">{t('editLine')}</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              {user?.role === 'co-owner' ? 'Assign Agent to Line' : t('editLine')}
+            </h2>
             <form className="space-y-4" onSubmit={handleUpdateLineSubmit}>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('lineName')}</label>
-                <input name="name" defaultValue={editingLine.name} required className="w-full px-3 py-2 border rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Initial Capital</label>
-                <input name="initialCapital" type="number" defaultValue={editingLine.initialCapital} className="w-full px-3 py-2 border rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Assign Co-Owner</label>
-                <select name="coOwnerId" defaultValue={editingLine.coOwnerId || ''} className="w-full px-3 py-2 border rounded">
-                  <option value="">None</option>
-                  {users.filter(u => u.role === 'co-owner').map(u => (
-                    <option key={u.id} value={u.id}>{u.name}</option>
-                  ))}
-                </select>
-              </div>
+              {user?.role === 'owner' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('lineName')}</label>
+                    <input name="name" defaultValue={editingLine.name} required className="w-full px-3 py-2 border rounded" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Initial Capital</label>
+                    <input name="initialCapital" type="number" defaultValue={editingLine.initialCapital} className="w-full px-3 py-2 border rounded" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Assign Co-Owner</label>
+                    <select name="coOwnerId" defaultValue={editingLine.coOwnerId || (editingLine as any).co_owner_id || ''} className="w-full px-3 py-2 border rounded">
+                      <option value="">None</option>
+                      {users.filter(u => u.role === 'co-owner').map(u => (
+                        <option key={u.id} value={u.id}>{u.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
+              {user?.role === 'co-owner' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-blue-700 font-medium mb-1">Line</p>
+                  <p className="text-lg font-bold text-blue-900">{editingLine.name}</p>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Assign Agent</label>
-                <select name="agentId" defaultValue={editingLine.agentId || ''} className="w-full px-3 py-2 border rounded">
+                <select name="agentId" defaultValue={editingLine.agentId || (editingLine as any).agent_id || ''} className="w-full px-3 py-2 border rounded">
                   <option value="">None</option>
-                  {users.filter(u => u.role === 'agent').map(u => (
+                  {users.filter(u => u.role === 'agent' && (user?.role === 'owner' || u.addedBy === user?.id)).map(u => (
                     <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
+                {user?.role === 'co-owner' && (
+                  <p className="text-xs text-gray-500 mt-1">You can only assign agents from your team</p>
+                )}
               </div>
-              <div className="flex items-center space-x-2">
-                <input id="isActive" name="isActive" type="checkbox" defaultChecked={!!editingLine.isActive} />
-                <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
-              </div>
+              {user?.role === 'owner' && (
+                <div className="flex items-center space-x-2">
+                  <input id="isActive" name="isActive" type="checkbox" defaultChecked={!!editingLine.isActive} />
+                  <label htmlFor="isActive" className="text-sm text-gray-700">Active</label>
+                </div>
+              )}
               <div className="flex space-x-3 pt-4">
                 <button type="button" onClick={() => { setShowEditModal(false); setEditingLine(null); }} className="flex-1 bg-gray-100 py-2 rounded">Cancel</button>
                 <button type="submit" disabled={opLoading} className="flex-1 bg-emerald-500 text-white py-2 rounded disabled:opacity-60">{opLoading ? 'Saving...' : 'Save'}</button>

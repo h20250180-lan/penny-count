@@ -50,20 +50,36 @@ export const UsersManagement: React.FC = () => {
   }, [currentUser]);
 
   const loadUsers = async () => {
-    if (currentUser?.role !== 'owner') return;
+    if (currentUser?.role !== 'owner' && currentUser?.role !== 'co-owner') return;
 
     setLoading(true);
     setError(null);
     try {
-      const usersData = await dataService.getUsers();
-      // Filter to show only agents and co-owners added by this owner
-      // Show both pending and approved users
-      const filtered = usersData.filter((u: User) =>
-        (u.role === 'agent' || u.role === 'co-owner') &&
-        u.addedBy === currentUser.id &&
-        u.approvalStatus !== 'rejected'
-      );
-      setUsers(filtered);
+      const [usersData, linesData] = await Promise.all([
+        dataService.getUsers(),
+        dataService.getLines()
+      ]);
+
+      if (currentUser?.role === 'owner') {
+        // Owners see all agents and co-owners they added
+        const filtered = usersData.filter((u: User) =>
+          (u.role === 'agent' || u.role === 'co-owner') &&
+          u.addedBy === currentUser.id &&
+          u.approvalStatus !== 'rejected'
+        );
+        setUsers(filtered);
+      } else if (currentUser?.role === 'co-owner') {
+        // Co-owners see only agents assigned to their lines
+        const coOwnerLines = linesData.filter((l: any) => l.co_owner_id === currentUser.id);
+        const agentIds = coOwnerLines.map((l: any) => l.agent_id).filter(Boolean);
+
+        const filtered = usersData.filter((u: User) =>
+          u.role === 'agent' &&
+          agentIds.includes(u.id) &&
+          u.approvalStatus !== 'rejected'
+        );
+        setUsers(filtered);
+      }
     } catch (error: any) {
       setError(error.message || 'Error loading users');
     } finally {
@@ -327,11 +343,11 @@ export const UsersManagement: React.FC = () => {
     }
   };
 
-  if (currentUser?.role !== 'owner') {
+  if (currentUser?.role !== 'owner' && currentUser?.role !== 'co-owner') {
     return (
       <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-xl">
         <AlertCircle className="w-6 h-6 text-yellow-600 mb-2" />
-        <p className="text-yellow-800">Only owners can manage users and agents.</p>
+        <p className="text-yellow-800">Only owners and co-owners can manage users and agents.</p>
       </div>
     );
   }
@@ -341,18 +357,25 @@ export const UsersManagement: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Users & Agents</h1>
-          <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your team of co-owners and agents</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{currentUser?.role === 'co-owner' ? 'My Agents' : 'Users & Agents'}</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1">
+            {currentUser?.role === 'co-owner'
+              ? 'Manage agents assigned to your lines'
+              : 'Manage your team of co-owners and agents'
+            }
+          </p>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center justify-center space-x-2 bg-gradient-to-r from-teal-600 to-teal-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all text-sm sm:text-base w-full sm:w-auto"
-        >
-          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span>Add User</span>
-        </motion.button>
+        {currentUser?.role === 'owner' && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center justify-center space-x-2 bg-gradient-to-r from-teal-600 to-teal-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all text-sm sm:text-base w-full sm:w-auto"
+          >
+            <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Add User</span>
+          </motion.button>
+        )}
       </div>
 
       {/* Alerts */}

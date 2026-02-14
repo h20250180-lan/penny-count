@@ -176,12 +176,41 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const refreshAgentLocations = async () => {
+    if (!user) return;
+
     try {
-      // First, get all agent locations
+      // Get lines based on user role
+      let agentIds: string[] = [];
+
+      if (user.role === 'owner') {
+        // Owners see all agents from their lines
+        const { data: linesData } = await supabase
+          .from('lines')
+          .select('agent_id')
+          .eq('owner_id', user.id);
+
+        agentIds = linesData?.map((l: any) => l.agent_id).filter(Boolean) || [];
+      } else if (user.role === 'co-owner') {
+        // Co-owners see only agents from lines they co-own
+        const { data: linesData } = await supabase
+          .from('lines')
+          .select('agent_id')
+          .eq('co_owner_id', user.id);
+
+        agentIds = linesData?.map((l: any) => l.agent_id).filter(Boolean) || [];
+      }
+
+      if (agentIds.length === 0) {
+        setAgentLocations([]);
+        return;
+      }
+
+      // Get agent locations for these agents only
       const { data: locationData, error: locationError } = await supabase
         .from('agent_locations')
         .select('*')
         .eq('is_active', true)
+        .in('user_id', agentIds)
         .order('last_updated', { ascending: false });
 
       if (locationError) {
@@ -208,11 +237,11 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Combine location and user data
       const locations: AgentLocation[] = locationData.map((loc: any) => {
-        const user = userData?.find(u => u.id === loc.user_id);
+        const userInfo = userData?.find(u => u.id === loc.user_id);
         return {
           id: loc.id,
           userId: loc.user_id,
-          userName: user?.name || 'Unknown',
+          userName: userInfo?.name || 'Unknown',
           latitude: parseFloat(loc.latitude),
           longitude: parseFloat(loc.longitude),
           accuracy: parseFloat(loc.accuracy || 0),
