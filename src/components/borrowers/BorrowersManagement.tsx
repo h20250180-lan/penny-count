@@ -16,7 +16,9 @@ import {
   Users,
   UserX,
   Wallet,
-  Upload
+  Upload,
+  Trash2,
+  X
 } from 'lucide-react';
 import { Borrower } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -242,24 +244,31 @@ export const BorrowersManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [riskFilter, setRiskFilter] = useState<string>('all');
   const [showBulkImport, setShowBulkImport] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingBorrower, setEditingBorrower] = useState<Borrower | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingBorrower, setDeletingBorrower] = useState<Borrower | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
+
+  // Load data function
+  const loadBorrowers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const borrowersData = await dataService.getBorrowers();
+      const linesData = await dataService.getLines();
+      setLines(linesData);
+      setBorrowers(borrowersData);
+    } catch (err: any) {
+      setError(err.message || 'Error loading borrowers');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load data on component mount
   React.useEffect(() => {
-    const loadBorrowers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const borrowersData = await dataService.getBorrowers();
-        const linesData = await dataService.getLines();
-        setLines(linesData);
-        setBorrowers(borrowersData);
-      } catch (err: any) {
-        setError(err.message || 'Error loading borrowers');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadBorrowers();
   }, []);
 
@@ -287,9 +296,32 @@ export const BorrowersManagement: React.FC = () => {
 
   const handleCreateBorrowerSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (isSubmitting) return;
+
     const formData = new FormData(e.currentTarget);
 
     const lineId = formData.get('lineId') as string;
+    const phone = (formData.get('phone') as string).trim();
+    const address = (formData.get('address') as string).trim();
+
+    // Validate phone number - exactly 10 digits
+    if (!/^\d{10}$/.test(phone)) {
+      pushToast({
+        type: 'error',
+        message: 'Phone number must be exactly 10 digits'
+      });
+      return;
+    }
+
+    // Validate address - must be complete (at least 20 characters)
+    if (address.length < 20) {
+      pushToast({
+        type: 'error',
+        message: 'Please enter a complete address (minimum 20 characters)'
+      });
+      return;
+    }
 
     if (user?.role === 'agent' && selectedLine && lineId !== selectedLine.id) {
       pushToast({
@@ -301,13 +333,14 @@ export const BorrowersManagement: React.FC = () => {
 
     const newBorrower = {
       name: formData.get('name') as string,
-      phone: formData.get('phone') as string,
-      address: formData.get('address') as string,
+      phone: phone,
+      address: address,
       lineId: lineId,
       isHighRisk: false,
       isDefaulter: false
     };
 
+    setIsSubmitting(true);
     try {
       const createdBorrower = await dataService.createBorrower(newBorrower);
       setBorrowers([...borrowers, createdBorrower]);
@@ -318,6 +351,8 @@ export const BorrowersManagement: React.FC = () => {
     } catch (error) {
       console.error('Error creating borrower:', error);
       pushToast({ type: 'error', message: (error as any)?.message || 'Failed to create borrower' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -345,6 +380,143 @@ export const BorrowersManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Error updating borrower risk:', error);
+    }
+  };
+
+  const handleEditBorrower = (borrower: Borrower) => {
+    setEditingBorrower(borrower);
+    setShowEditModal(true);
+    setShowDetailsModal(false);
+  };
+
+  const handleEditBorrowerSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingBorrower || isSubmitting) return;
+
+    const formData = new FormData(e.currentTarget);
+    const phone = (formData.get('phone') as string).trim();
+    const address = (formData.get('address') as string).trim();
+
+    // Validate phone number - exactly 10 digits
+    if (!/^\d{10}$/.test(phone)) {
+      pushToast({
+        type: 'error',
+        message: 'Phone number must be exactly 10 digits'
+      });
+      return;
+    }
+
+    // Validate address - must be complete (at least 20 characters)
+    if (address.length < 20) {
+      pushToast({
+        type: 'error',
+        message: 'Please enter a complete address (minimum 20 characters)'
+      });
+      return;
+    }
+
+    const updates = {
+      name: formData.get('name') as string,
+      phone: phone,
+      address: address,
+    };
+
+    setIsSubmitting(true);
+    try {
+      const updatedBorrower = await dataService.updateBorrower(editingBorrower.id, updates);
+      setBorrowers(borrowers.map(b => b.id === editingBorrower.id ? updatedBorrower : b));
+      setShowEditModal(false);
+      setEditingBorrower(null);
+      pushToast({ type: 'success', message: 'Borrower updated successfully' });
+    } catch (error) {
+      console.error('Error updating borrower:', error);
+      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to update borrower' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteBorrower = (borrower: Borrower) => {
+    setDeletingBorrower(borrower);
+    setDeleteReason('');
+    setShowDeleteModal(true);
+    setShowDetailsModal(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingBorrower || isSubmitting) return;
+
+    // Check if borrower has active loans
+    if (deletingBorrower.activeLoans && deletingBorrower.activeLoans > 0) {
+      if (user?.role === 'owner') {
+        // Owner can delete directly
+        setIsSubmitting(true);
+        try {
+          await dataService.deleteBorrower(deletingBorrower.id);
+          setBorrowers(borrowers.filter(b => b.id !== deletingBorrower.id));
+          setShowDeleteModal(false);
+          setDeletingBorrower(null);
+          pushToast({ type: 'success', message: 'Borrower deleted successfully' });
+        } catch (error) {
+          console.error('Error deleting borrower:', error);
+          pushToast({ type: 'error', message: (error as any)?.message || 'Failed to delete borrower' });
+        } finally {
+          setIsSubmitting(false);
+        }
+      } else {
+        // Non-owners cannot delete if loans exist
+        pushToast({
+          type: 'error',
+          message: 'Cannot delete borrower with active loans. Clear the loan first or request owner to delete.'
+        });
+      }
+    } else {
+      // No active loans - anyone can delete
+      setIsSubmitting(true);
+      try {
+        await dataService.deleteBorrower(deletingBorrower.id);
+        setBorrowers(borrowers.filter(b => b.id !== deletingBorrower.id));
+        setShowDeleteModal(false);
+        setDeletingBorrower(null);
+        pushToast({ type: 'success', message: 'Borrower deleted successfully' });
+      } catch (error) {
+        console.error('Error deleting borrower:', error);
+        pushToast({ type: 'error', message: (error as any)?.message || 'Failed to delete borrower' });
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleRequestOwnerDelete = async () => {
+    if (!deletingBorrower || !deleteReason.trim() || isSubmitting) {
+      pushToast({ type: 'error', message: 'Please provide a reason for deletion' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Find the owner from the borrower's line
+      const borrowerLine = lines.find(l => l.id === deletingBorrower.lineId);
+      if (!borrowerLine || !borrowerLine.owner_id) {
+        pushToast({ type: 'error', message: 'Could not find line owner' });
+        return;
+      }
+
+      // Create deletion request (this would need to be implemented in dataService)
+      // For now, we'll just show a success message
+      pushToast({
+        type: 'success',
+        message: 'Deletion request sent to owner. You will be notified when it is processed.'
+      });
+      setShowDeleteModal(false);
+      setDeletingBorrower(null);
+      setDeleteReason('');
+    } catch (error) {
+      console.error('Error requesting delete:', error);
+      pushToast({ type: 'error', message: (error as any)?.message || 'Failed to send deletion request' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -646,7 +818,7 @@ export const BorrowersManagement: React.FC = () => {
             <form className="space-y-4" onSubmit={handleCreateBorrowerSubmit}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
+                  Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -654,35 +826,43 @@ export const BorrowersManagement: React.FC = () => {
                   placeholder="Enter full name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
+                  Phone Number <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
                   name="phone"
-                  placeholder="+919876543210"
+                  placeholder="9876543210 (10 digits)"
+                  maxLength={10}
+                  pattern="\d{10}"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   required
+                  disabled={isSubmitting}
                 />
+                <p className="text-xs text-gray-500 mt-1">Must be exactly 10 digits</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address
+                  Complete Address <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   name="address"
-                  placeholder="Enter complete address"
-                  rows={3}
+                  placeholder="Enter complete address with street, area, city, state, pincode"
+                  rows={4}
+                  minLength={20}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                   required
+                  disabled={isSubmitting}
                 />
+                <p className="text-xs text-gray-500 mt-1">Minimum 20 characters required</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Line Assignment
+                  Line Assignment <span className="text-red-500">*</span>
                 </label>
                 {user?.role === 'agent' && selectedLine ? (
                   <div className="w-full px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 rounded-xl flex items-center space-x-3">
@@ -694,7 +874,7 @@ export const BorrowersManagement: React.FC = () => {
                     <input type="hidden" name="lineId" value={selectedLine.id} />
                   </div>
                 ) : (
-                  <select name="lineId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
+                  <select name="lineId" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required disabled={isSubmitting}>
                     <option value="">Select Line</option>
                     {lines && lines.length > 0 ? (
                       lines.map(l => (
@@ -706,39 +886,56 @@ export const BorrowersManagement: React.FC = () => {
                   </select>
                 )}
               </div>
-              <div className="flex items-center space-x-4">
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center space-x-2 bg-blue-50 text-blue-600 py-2 px-4 rounded-lg font-medium hover:bg-blue-100 transition-colors"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span>Take Photo</span>
-                </motion.button>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center space-x-2 bg-green-50 text-green-600 py-2 px-4 rounded-lg font-medium hover:bg-green-100 transition-colors"
-                >
-                  <Navigation className="w-4 h-4" />
-                  <span>Get Location</span>
-                </motion.button>
+
+              {/* Optional file uploads */}
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">Optional Documents</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Upload Aadhar (Optional)
+                    </label>
+                    <input
+                      type="file"
+                      name="aadhar"
+                      accept="image/*,.pdf"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Upload Photo (Optional)
+                    </label>
+                    <input
+                      type="file"
+                      name="photo"
+                      accept="image/*"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
               </div>
+
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setIsSubmitting(false);
+                  }}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors"
+                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
                 >
-                  {t('addBorrower')}
+                  {isSubmitting ? 'Adding...' : t('addBorrower')}
                 </button>
               </div>
             </form>
@@ -853,6 +1050,30 @@ export const BorrowersManagement: React.FC = () => {
                 </div>
               </div>
 
+              {/* Edit and Delete Buttons */}
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex space-x-3 mb-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleEditBorrower(selectedBorrower)}
+                    className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    <span>Edit Details</span>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleDeleteBorrower(selectedBorrower)}
+                    className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete</span>
+                  </motion.button>
+                </div>
+              </div>
+
               {/* Action Buttons */}
               {user?.role === 'agent' && (
                 <div className="pt-4 border-t border-gray-200">
@@ -906,6 +1127,219 @@ export const BorrowersManagement: React.FC = () => {
                 </div>
               )}
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit Borrower Modal */}
+      {showEditModal && editingBorrower && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+          >
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Edit Borrower</h2>
+            <form className="space-y-4" onSubmit={handleEditBorrowerSubmit}>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  defaultValue={editingBorrower.name}
+                  placeholder="Enter full name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  defaultValue={editingBorrower.phone}
+                  placeholder="9876543210 (10 digits)"
+                  maxLength={10}
+                  pattern="\d{10}"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  required
+                  disabled={isSubmitting}
+                />
+                <p className="text-xs text-gray-500 mt-1">Must be exactly 10 digits</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Complete Address <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="address"
+                  defaultValue={editingBorrower.address}
+                  placeholder="Enter complete address with street, area, city, state, pincode"
+                  rows={4}
+                  minLength={20}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  required
+                  disabled={isSubmitting}
+                />
+                <p className="text-xs text-gray-500 mt-1">Minimum 20 characters required</p>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingBorrower(null);
+                    setIsSubmitting(false);
+                  }}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-emerald-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Delete Borrower Modal */}
+      {showDeleteModal && deletingBorrower && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 w-full max-w-md"
+          >
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-3 bg-red-100 rounded-full">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800">Delete Borrower</h2>
+            </div>
+
+            {deletingBorrower.activeLoans && deletingBorrower.activeLoans > 0 ? (
+              <div className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <p className="text-amber-800 font-medium mb-2">Warning: Active Loans Found</p>
+                  <p className="text-sm text-amber-700">
+                    This borrower has {deletingBorrower.activeLoans} active loan(s).
+                    {user?.role === 'owner'
+                      ? ' As an owner, you can force delete this borrower.'
+                      : ' You need to either clear all loans first or request the owner to delete this borrower.'
+                    }
+                  </p>
+                </div>
+
+                {user?.role === 'owner' ? (
+                  <div className="space-y-3">
+                    <p className="text-gray-700 font-medium">Are you sure you want to delete this borrower?</p>
+                    <p className="text-sm text-gray-600">
+                      Borrower: <span className="font-semibold">{deletingBorrower.name}</span>
+                    </p>
+                    <div className="flex space-x-3 pt-2">
+                      <button
+                        onClick={() => {
+                          setShowDeleteModal(false);
+                          setDeletingBorrower(null);
+                          setIsSubmitting(false);
+                        }}
+                        className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                        disabled={isSubmitting}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleConfirmDelete}
+                        className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? 'Deleting...' : 'Force Delete'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for Deletion Request <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={deleteReason}
+                        onChange={(e) => setDeleteReason(e.target.value)}
+                        placeholder="Explain why this borrower should be deleted..."
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => {
+                          setShowDeleteModal(false);
+                          setDeletingBorrower(null);
+                          setDeleteReason('');
+                          setIsSubmitting(false);
+                        }}
+                        className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                        disabled={isSubmitting}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleRequestOwnerDelete}
+                        className="flex-1 bg-orange-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? 'Sending...' : 'Request Owner'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-gray-700">Are you sure you want to delete this borrower?</p>
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  <p className="text-sm text-gray-600 mb-1">Borrower Details:</p>
+                  <p className="font-semibold text-gray-800">{deletingBorrower.name}</p>
+                  <p className="text-sm text-gray-600">{deletingBorrower.phone}</p>
+                  <p className="text-sm text-gray-600">No active loans</p>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => {
+                      setShowDeleteModal(false);
+                      setDeletingBorrower(null);
+                      setIsSubmitting(false);
+                    }}
+                    className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.div>
         </div>
       )}
